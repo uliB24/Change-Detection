@@ -1,10 +1,14 @@
 // Change Detection.cpp : Definiert den Einstiegspunkt für die Konsolenanwendung.
 //
 
-#include "stdafx.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <iomanip> 
+
 
 #include <opencv2/opencv.hpp>
-
 
 using namespace std;
 using namespace cv;
