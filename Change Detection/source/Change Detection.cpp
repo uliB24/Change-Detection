@@ -201,9 +201,9 @@ int main(int argc, char *argv[])
             //if(x == 110 && y == 145)
               //cout << "Diff: " << abs(frame.at<Vec3b>(y,x).val[i] - back.at<Vec3b>(y,x).val[i]) << endl << "var: " << var.at<Vec3f>(y,x).val[i] << "\n";
           //cout << endl;
-          if(abs(frame.at<Vec3b>(y,x).val[0] - back.at<Vec3b>(y,x).val[0]) < 3*(var.at<Vec3f>(y,x).val[0]) ||
-             abs(frame.at<Vec3b>(y,x).val[1] - back.at<Vec3b>(y,x).val[1]) < 3*(var.at<Vec3f>(y,x).val[1]) ||
-             abs(frame.at<Vec3b>(y,x).val[2] - back.at<Vec3b>(y,x).val[2]) < 3*(var.at<Vec3f>(y,x).val[2]))
+          if(abs(frame.at<Vec3b>(y,x).val[0] - back.at<Vec3b>(y,x).val[0]) < 6*(var.at<Vec3f>(y,x).val[0]) ||
+             abs(frame.at<Vec3b>(y,x).val[1] - back.at<Vec3b>(y,x).val[1]) < 6*(var.at<Vec3f>(y,x).val[1]) ||
+             abs(frame.at<Vec3b>(y,x).val[2] - back.at<Vec3b>(y,x).val[2]) < 6*(var.at<Vec3f>(y,x).val[2]))
           {
             fore.at<uchar>(y,x) = 0;
           }
