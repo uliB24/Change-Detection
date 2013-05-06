@@ -25,14 +25,14 @@ namespace
 {
   //Konstanten:
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/canoe/input/in"; // 4 sigma, 1x1 erode
-  //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // 6 sigma + 3x3 erode
+  string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // 6 sigma + 3x3 erode
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/highway/input/in"; // klappt nicht gut, da autos schon am Anfang da lang fahren
   // -> bei der erstellung der Varianz muss bereits erkannt werden, dass fahrende Autos nicht in die Varianz und den Hintergrund einflieﬂen
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in"; // schtatten muss entfernt werden, autos fahren schon am begin da lang(nicht so schlimm wie bei highway)
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/office/input/in"; // mensch muss getrackt werden
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/Bootstrap/b"; // Tracken!!, achtung bmp mit 5 zahlen
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/parking/input/in";streetLight
-  string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/streetLight/input/in"; //gleiches problem wie bei highway, weiﬂe autos in mitteler Fahrspur
+  //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/streetLight/input/in"; //gleiches problem wie bei highway, weiﬂe autos in mitteler Fahrspur
   //enums:
   enum Method
   {
@@ -195,24 +195,17 @@ int main(int argc, char *argv[])
       bg.getBackgroundImage(back);
       for(size_t x = 0; x < fore.size().width; ++x)
       {
-        if(x == 144)
-          int a = 0;
         for(size_t y = 0; y < fore.size().height; ++y)
         {
           //for(int i = 0; i < 3; ++i)
             //if(x == 110 && y == 145)
               //cout << "Diff: " << abs(frame.at<Vec3b>(y,x).val[i] - back.at<Vec3b>(y,x).val[i]) << endl << "var: " << var.at<Vec3f>(y,x).val[i] << "\n";
           //cout << endl;
-          if(abs(frame.at<Vec3b>(y,x).val[0] - back.at<Vec3b>(y,x).val[0]) < 3*(var.at<Vec3f>(y,x).val[0]) && 
-             abs(frame.at<Vec3b>(y,x).val[1] - back.at<Vec3b>(y,x).val[1]) < 3*(var.at<Vec3f>(y,x).val[1]) &&
+          if(abs(frame.at<Vec3b>(y,x).val[0] - back.at<Vec3b>(y,x).val[0]) < 3*(var.at<Vec3f>(y,x).val[0]) ||
+             abs(frame.at<Vec3b>(y,x).val[1] - back.at<Vec3b>(y,x).val[1]) < 3*(var.at<Vec3f>(y,x).val[1]) ||
              abs(frame.at<Vec3b>(y,x).val[2] - back.at<Vec3b>(y,x).val[2]) < 3*(var.at<Vec3f>(y,x).val[2]))
-          //if((float)back.at<Vec3b>(y,x).val[0] < (float)frame.at<Vec3b>(y,x).val[0] - var.at<Vec3f>(y,x).val[0] ||)
-          //if(var.at<Vec3f>(y,x).val[0] > 10.0f || var.at<Vec3f>(y,x).val[1] > 10.0f || var.at<Vec3f>(y,x).val[2] > 10.0f)
           {
             fore.at<uchar>(y,x) = 0;
-            //fore.at<Vec3b>(y,x).val[0] = 0;
-            //fore.at<Vec3b>(y,x).val[1] = 0;
-            //fore.at<Vec3b>(y,x).val[2] = 0;
           }
         }
       }
