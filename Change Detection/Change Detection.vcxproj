@@ -83,8 +83,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="erosiondilatation.cpp" />
     <ClCompile Include="source\Change Detection.cpp" />
+    <ClCompile Include="source\erosiondilatation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\test.h" />
