@@ -34,5 +34,7 @@ private:
 
   cv::Mat lastFrame;
 
+  
+
 };
 
