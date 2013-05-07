@@ -26,7 +26,9 @@ namespace
 {
   //Konstanten:
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/canoe/input/in"; // 4 sigma, 1x1 erode
-  string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // 6 sigma + 3x3 erode
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // 6 sigma + 3x3 erode
+  string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in";
+  
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/highway/input/in"; // klappt nicht gut, da autos schon am Anfang da lang fahren
   // -> bei der erstellung der Varianz muss bereits erkannt werden, dass fahrende Autos nicht in die Varianz und den Hintergrund einflieﬂen
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in"; // schtatten muss entfernt werden, autos fahren schon am begin da lang(nicht so schlimm wie bei highway)
@@ -75,7 +77,11 @@ int main(int argc, char *argv[])
   namedWindow("mean");
   namedWindow("var");
 
+  namedWindow("changevor");
+  namedWindow("changeOpening");
   namedWindow("change");
+
+  namedWindow("frameroiContours");
 
   size_t count = 0;
 
