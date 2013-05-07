@@ -83,11 +83,12 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\Background.cpp" />
     <ClCompile Include="source\Change Detection.cpp" />
     <ClCompile Include="source\erosiondilatation.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\test.h" />
+    <ClInclude Include="include\Background.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
