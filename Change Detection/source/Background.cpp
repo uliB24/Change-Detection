@@ -37,6 +37,101 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
   fore = Mat(frame.size(), CV_8U);
   ++m_n;
   
+
+  //vector<Rect> roi;
+
+  for(auto it(m_roi.begin()); it != m_roi.end(); ++it)
+  {
+    if((*it).second > 2)
+      m_roi.erase(it);
+    else
+      ++(*it).second;
+  }
+
+  if(m_lastFrame.data)
+  {
+    Mat change = abs(m_lastFrame - frame);
+    imshow("changevor", change);
+    //Mat show = change.clone();
+    //Mat show; //= Mat(change.size(), IPL_DEPTH_16U, Scalar(0,0,0));
+    Mat edges;
+    std::vector<std::vector<cv::Point> > contours;
+    std::vector<std::vector<cv::Point> > bigcontours;
+    //cvtColor( change, change, CV_BGR2GRAY );
+    //size_t size = 2;
+    //Mat erosionKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point( size, size ) );
+    //Mat dilatationKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point(size, size ) );
+    //erode(change,change,erosionKernel);
+    //dilate(change,change,dilatationKernel);
+
+    Canny(change,edges, 50,70);
+    findContours(edges,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+    std::cout << "Found " << contours.size() << " contours." << std::endl;
+    for( int i = 0; i< contours.size(); i++ )
+    {
+      cout << "Area: " << contourArea(contours[i]) << endl;
+      if(contourArea(contours[i]) > 15.0)
+      {
+        bigcontours.push_back(contours[i]);
+        //roi.push_back(boundingRect(Mat(contours[i])));
+      }
+    }
+    drawContours(change,bigcontours,-1,Scalar(0,0,255),2);
+    imshow("change", change);
+
+    
+    Mat frameRoiContours = frame.clone();
+    std::vector<std::vector<cv::Point> > contoursFrame;
+    for( int i = 0; i< bigcontours.size(); i++ )
+    {
+      double area = contourArea(bigcontours[i]);
+      Rect rect = boundingRect(Mat(bigcontours[i]));
+      
+      double dx = rect.width * 0.5;
+      double dy = rect.height * 0.5;
+      rect.x -= dx;
+      rect.width += 2 * dx;
+      rect.y -= dy;
+      rect.height += 2 * dy;
+      if(rect.x < 0)
+        rect.x = 0;
+      if(rect.x + rect.width > frame.size().width)
+      {
+        cout << "rand x\n";
+        rect.width = frame.size().width - rect.x;
+      }
+      if(rect.y < 0)
+        rect.y = 0;
+      if(rect.y + rect.height > frame.size().height)
+      {
+        cout << "rand y\n";
+        rect.height = frame.size().height - rect.y;
+      }
+
+      m_roi.push_back(make_pair(rect, 1));
+      
+      rectangle(change, rect.tl(), rect.br(), Scalar(255,0,0));
+
+      /*
+      std::vector<std::vector<cv::Point> > contoursTmp;
+      Mat frameROI(frame, rect);
+      Mat roiedges;
+      Canny(frameROI,roiedges, 80,100);
+      findContours(roiedges,contoursTmp,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE, Point(rect.x, rect.y));
+      drawContours(frameRoiContours,contoursTmp,-1,Scalar(0,0,255),2);
+      for( int i = 0; i< contoursTmp.size(); i++ )
+      {
+      if(contourArea(contoursTmp[i]) < 25.0)
+      continue;
+      Rect rect2 = boundingRect(Mat(contoursTmp[i]));
+      rectangle(frameRoiContours, rect2.tl(), rect2.br(), Scalar(255,0,0));
+      }
+      */
+    }
+    imshow("changeOpening", change);
+  }
+
+
   // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
   // online_variance
 
@@ -45,6 +140,8 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
   {
     for(int y = 0; y < frame.size().height; ++y)
     {        
+      if(inAnyRect(Point(x,y)))
+        continue;
       for(int i = 0; i < 3; ++i)
       {
         float f = frame.at<Vec3b>(y, x).val[i];
@@ -90,69 +187,8 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
   erode(fore,fore,m_erosionKernel);
   dilate(fore,fore,m_dilatationKernel);
 
-  if(lastFrame.data)
-  {
-    Mat change = abs(lastFrame - frame);
-    imshow("changevor", change);
-    //Mat show = change.clone();
-    //Mat show; //= Mat(change.size(), IPL_DEPTH_16U, Scalar(0,0,0));
-    Mat edges;
-    std::vector<std::vector<cv::Point> > contours;
-    std::vector<std::vector<cv::Point> > bigcontours;
-    //cvtColor( change, change, CV_BGR2GRAY );
-    //size_t size = 2;
-    //Mat erosionKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point( size, size ) );
-    //Mat dilatationKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point(size, size ) );
-    //erode(change,change,erosionKernel);
-    //dilate(change,change,dilatationKernel);
-    
-    Canny(change,edges, 80,100);
-    findContours(edges,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-    std::cout << "Found " << contours.size() << " contours." << std::endl;
-    for( int i = 0; i< contours.size(); i++ )
-    {
-      cout << "Area: " << contourArea(contours[i]) << endl;
-      if(contourArea(contours[i]) > 25.0)
-        bigcontours.push_back(contours[i]);
-    }
-    drawContours(change,bigcontours,-1,Scalar(0,0,255),2);
-    imshow("change", change);
 
-    vector<Rect> roi;
-    Mat frameRoiContours = frame.clone();
-    std::vector<std::vector<cv::Point> > contoursFrame;
-    for( int i = 0; i< bigcontours.size(); i++ )
-    {
-      double area = contourArea(bigcontours[i]);
-      Rect rect = boundingRect(Mat(bigcontours[i]));
-      rect.width += area * 0.5;
-      if(rect.x - rect.width * 0.5 < 0)
-        rect.width = rect.x * 2;
-      if(rect.x + rect.width * 0.5 > frame.size().width)
-        rect.width = (frame.size().width - rect.x) * 2;
-      rect.height += area * 0.5;
-      if(rect.y - rect.height * 0.5 < 0)
-        rect.height = rect.y * 2;
-      if(rect.y + rect.height * 0.5 > frame.size().height)
-        rect.height = (frame.size().height - rect.y) * 2;
-      roi.push_back(rect);
-      rectangle(change, Point(rect.x - rect.width/2, rect.y - rect.height/2), Point(rect.x + rect.width/2, rect.y + rect.height/2), Scalar(255,0,0));
-
-      std::vector<std::vector<cv::Point> > contoursTmp;
-      Mat frameROI(frame, rect);
-      Mat roiedges;
-      Canny(frameROI,roiedges, 80,100);
-      findContours(roiedges,contoursTmp,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE, Point(rect.x, rect.y));
-      drawContours(frameRoiContours,contoursTmp,-1,Scalar(0,0,255),2);
-      for( int i = 0; i< contoursTmp.size(); i++ )
-      {
-        if(contourArea(contoursTmp[i]) < 25.0)
-          continue;
-        Rect rect2 = boundingRect(Mat(contoursTmp[i])); // -> Bounding Rects sind falsch! Fehler in Opencv?? wohl kaum, selber schreiben, indem keinster und größter x und y wert gesucht wird
-        rectangle(frameRoiContours, Point(rect2.x - rect2.width/2, rect2.y - rect2.height/2), Point(rect2.x + rect2.width/2, rect2.y + rect2.height/2), Scalar(255,0,0));
-      }
-    }
-    imshow("frameroiContours", frameRoiContours);
+    //imshow("frameroiContours", frameRoiContours);
     //for(size_t x = 0; x < change.size().width; ++x)
     //{
     //  for(size_t y = 0; y < change.size().height; ++y)
@@ -162,17 +198,27 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     //        //change.at<Vec3b>(y,x) = Vec3b(255,0,0);
     //  }
     //}
-    imshow("changeOpening", change);
     
-  }
+    
+
 
   
 
-  lastFrame = frame.clone();
+  m_lastFrame = frame.clone();
 }
 
 void Background::getBackgroundImage(cv::Mat& back) const
 {
   m_bg.getBackgroundImage(back);
   //m_mean.convertTo(back, IPL_DEPTH_16U);
+}
+
+bool Background::inAnyRect(cv::Point p) const
+{
+  for(const pair<Rect, float>& rect : m_roi)
+  {
+    if(rect.first.contains(p))
+      return true;
+  }
+  return false;
 }

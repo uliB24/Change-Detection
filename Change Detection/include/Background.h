@@ -15,6 +15,9 @@ public:
 	void getBackgroundImage(cv::Mat& back) const;
 
 private:
+  bool inAnyRect(cv::Point p) const;
+
+private:
 
 	cv::BackgroundSubtractorMOG2 m_bg;
 	
@@ -32,7 +35,9 @@ private:
 
 	std::string m_path;
 
-  cv::Mat lastFrame;
+  cv::Mat m_lastFrame;
+
+  std::list<std::pair<cv::Rect, float>> m_roi;
 
   
 

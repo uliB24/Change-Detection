@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
     imshow("Frame",frame);
     imshow("Background",back);
-    if(waitKey(10) >= 0) break;
+    if(waitKey(30) >= 0) break;
   }
   return 0;
 }
