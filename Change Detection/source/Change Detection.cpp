@@ -26,8 +26,8 @@ namespace
 {
   //Konstanten:
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/canoe/input/in"; // 4 sigma, 1x1 erode
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // 6 sigma + 3x3 erode
-  string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in";
+  string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // 6 sigma + 3x3 erode
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in";
   
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/highway/input/in"; // klappt nicht gut, da autos schon am Anfang da lang fahren
   // -> bei der erstellung der Varianz muss bereits erkannt werden, dass fahrende Autos nicht in die Varianz und den Hintergrund einfließen
@@ -82,6 +82,9 @@ int main(int argc, char *argv[])
   namedWindow("change");
   namedWindow("changeak");
 
+  namedWindow("alleRechtecke");
+  namedWindow("Rechtecke");
+
   namedWindow("frameroiContours");
 
   size_t count = 0;
@@ -109,8 +112,8 @@ int main(int argc, char *argv[])
 
     imshow("Frame",frame);
     imshow("Background",back);
-    waitKey(0);
-    if(waitKey(10) >= 0) break;
+    //waitKey(0);
+    if(waitKey(30) >= 0) break;
   }
   return 0;
 }

@@ -10,6 +10,20 @@
 using namespace std;
 using namespace cv;
 
+namespace
+{
+  struct comRect
+  {
+    comRect() {}
+    comRect(Rect r, bool m, double a) : rect(r), merged(m), maxArea(a) {}
+    Rect rect;
+    bool merged;
+    double maxArea;
+  };
+
+  Rect bRect(const vector<Point>& vec);
+}
+
 Background::Background(string path, size_t erosion_size, size_t dilatation_size, size_t numSigma)
   : m_path(path), m_n(0), m_numSigma(numSigma)
 {
@@ -60,13 +74,13 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     std::vector<std::vector<cv::Point> > contours;
     std::vector<std::vector<cv::Point> > bigcontours;
     //cvtColor( change, change, CV_BGR2GRAY );
-    //size_t size = 2;
-    //Mat erosionKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point( size, size ) );
-    //Mat dilatationKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point(size, size ) );
-    //erode(change,change,erosionKernel);
-    //dilate(change,change,dilatationKernel);
+    /*size_t size = 0;
+    Mat erosionKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point( size, size ) );
+    Mat dilatationKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point(size, size ) );
+    erode(change,change,erosionKernel);
+    dilate(change,change,dilatationKernel);*/
 
-    Canny(change,edges, 50,70);
+    Canny(change,edges, 70,80);
     findContours(edges,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
     //std::cout << "Found " << contours.size() << " contours." << std::endl;
     for( int i = 0; i< contours.size(); i++ )
@@ -78,21 +92,25 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
         //roi.push_back(boundingRect(Mat(contours[i])));
       }
     }
-    drawContours(change,bigcontours,-1,Scalar(0,0,255),2);
+
+    drawContours(change,bigcontours,-1,Scalar(0,0,255),1);
     imshow("change", change);
     alle = change.clone();
     changeak = change.clone();
+    Mat r1 = change.clone();
+    Mat r2 = change.clone();
     
     Mat frameRoiContours = frame.clone();
     vector<ROI> toAdd;
     std::vector<std::vector<cv::Point> > contoursFrame;
+    vector<comRect> allRects;
     for( int i = 0; i< bigcontours.size(); i++ )
     {
       double area = contourArea(bigcontours[i]);
       Rect rect = boundingRect(Mat(bigcontours[i]));
       
-      double dx = rect.width * 0.25;
-      double dy = rect.height * 0.25;
+      double dx = rect.width * 0.2;
+      double dy = rect.height * 0.2;
       rect.x -= dx;
       rect.width += 2 * dx;
       rect.y -= dy;
@@ -105,7 +123,50 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
         rect.y = 0;
       if(rect.y + rect.height > frame.size().height)
         rect.height = frame.size().height - rect.y;
-
+      allRects.push_back(comRect(rect,false, area));
+      rectangle(r1, rect.tl(), rect.br(), Scalar(255,0,0));
+    }
+    vector<Rect> bRects;
+    for(size_t i = 0; i < allRects.size(); ++i)
+    {
+      if(allRects[i].merged)
+          continue;
+      if(i+1 >= allRects.size())
+        break;
+      for(size_t j = 0; j < allRects.size(); ++j)
+      {     
+        if(i == j)
+          continue;
+        if(allRects[i].rect.contains(allRects[j].rect.tl()) && allRects[i].rect.contains(allRects[j].rect.br())) // 2. rechteck ist in erstem enthalten
+        {
+          allRects[j].merged = true;
+          continue;
+        }
+        if(allRects[j].rect.contains(allRects[i].rect.tl()) && allRects[j].rect.contains(allRects[i].rect.br())) // 1. rechteck ist in 2. enthalten
+        {
+          allRects[i].merged = true;
+          continue;
+        }
+        if(allRects[j].merged || allRects[i].merged)   // 2.Rechteck wurde schon dazugemerged         
+          continue;
+        Rect min = allRects[i].rect & allRects[j].rect;
+        if(min.width != 0 || min.height != 0) // Schnitt
+        {
+          allRects[i].rect |= allRects[j].rect;
+          allRects[j].merged = true;
+          allRects[i].maxArea = max(allRects[i].maxArea, allRects[j].maxArea);
+        }
+      }
+    }
+    for(size_t i = 0; i < allRects.size(); ++i)
+    {
+      if(!allRects[i].merged)
+        bRects.push_back(allRects[i].rect);
+    }
+    for( const Rect& rect : bRects)
+    {
+      rectangle(r2, rect.tl(), rect.br(), Scalar(255,0,0));
+      float area = rect.width * rect.height;
       ROI ak(rect);
       float conf;
       ROI found;
@@ -115,12 +176,12 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       else
       {
         //ak.conf = (area * area) / 4000.0f;
-        if(ak.rect.x < 3 || ak.rect.y < 3 || frame.size().width - (ak.rect.x + ak.rect.width) < 3 || frame.size().height - (ak.rect.y + ak.rect.height) < 3)
-          ak.conf = 0.13 + (area * area) / 4000.0f;
+        if(ak.rect.x < 10 || ak.rect.y < 10 || frame.size().width - (ak.rect.x + ak.rect.width) < 10 || frame.size().height - (ak.rect.y + ak.rect.height) < 10)
+          ak.conf = 0.15 + (area * area) / 4000.0f;
         else
           ak.conf = 0;
-        if(ak.conf > 1)
-          ak.conf = 1;
+        //if(ak.conf > 1)
+          //ak.conf = 1;
         conf = ak.conf;
         toAdd.push_back(ak);
       }
@@ -151,6 +212,10 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     }
     imshow("frameroiContours", alle);
     imshow("changeak", changeak);
+
+
+    imshow("alleRechtecke", r1);
+    imshow("Rechtecke", r2);
   }
   // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
   // online_variance
@@ -242,12 +307,13 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     (*it).conf /= (0.55f * diff);
     auto del = it;
     ++it;
-    if(it == m_roi.end())
-      break;
     if((*del).conf < 0.01)
     {
       m_roi.erase(del);
     }
+    if(it == m_roi.end())
+      break;
+    
     
   }
   cout << "---------------------------\n";
@@ -278,38 +344,68 @@ bool Background::find(const ROI& roi, ROI& ret)
 {
   for( ROI& roi2 : m_roi)
   {
-    if(roi2.velx == 0 && roi2.vely == 0)
-    {
-      if(abs(roi2.rect.x - roi.rect.x) < roi2.rect.width * 0.2 && abs(roi2.rect.y - roi.rect.y) < roi2.rect.height * 0.2
-        && abs(roi2.rect.width - roi.rect.width) < 20 && abs(roi2.rect.height - roi.rect.height) < 20)
+    //if(roi2.velx == 0 && roi2.vely == 0)
+    //{
+      if(abs(roi2.rect.x - roi.rect.x) < roi2.rect.width * 0.3 && abs(roi2.rect.y - roi.rect.y) < roi2.rect.height * 0.3
+        && abs(roi2.rect.width - roi.rect.width) < roi2.rect.width * 0.35 && abs(roi2.rect.height - roi.rect.height) < roi2.rect.height * 0.35)
       {
-        roi2.conf *= 4;
-        if(roi2.conf > 1)
-          roi2.conf = 1;        
+        
+        //if(roi2.conf > 1)
+          //roi2.conf = 1;        
         ++roi2.cfound;
+        size_t tmp = 4;
+        roi2.conf *= max(tmp , roi2.cfound);
+        if(roi2.conf > 1000000)
+          roi2.conf = 1000000;  
         roi2.velx = abs(roi2.rect.x - roi.rect.x);
         roi2.vely = abs(roi2.rect.y - roi.rect.y);
         roi2.rect = roi.rect;
         ret = roi2;
         return true;
       }
-    }
+    /*}
     else
     {
       if(abs(roi2.rect.x - roi.rect.x) < roi2.rect.width * 0.1 + roi2.velx && abs(roi2.rect.y - roi.rect.y) < roi2.rect.height * 0.1 + roi2.vely
         && abs(roi2.rect.width - roi.rect.width) < 20 && abs(roi2.rect.height - roi.rect.height) < 20)
       {
         roi2.conf *= 4;
-        if(roi2.conf > 1)
-          roi2.conf = 1;        
+        //if(roi2.conf > 1)
+          //roi2.conf = 1;        
         ++roi2.cfound;
         roi2.velx = abs(roi2.rect.x - roi.rect.x);
+
         roi2.vely = abs(roi2.rect.y - roi.rect.y);
         roi2.rect = roi.rect;
         ret = roi2;
         return true;
       }
-    }
+    }*/
   }
   return false;
 }
+
+namespace
+{
+
+Rect bRect(const vector<Point>& vec)
+{
+  size_t minx = 1000000;  //hier besset boost::numeric::bounds nutzen
+  size_t miny = 1000000;
+  size_t maxx = 0;
+  size_t maxy = 0;
+  for(const Point& p : vec)
+  {
+    if(p.x < minx)
+      minx = p.x;
+    if(p.x > maxx)
+      maxx = p.x;
+    if(p.y < miny)
+      miny = p.y;
+    if(p.y > maxy)
+      maxy = p.y;
+  }
+  return Rect(minx, miny, maxx - minx, maxy - miny);
+}
+
+} // namespace
