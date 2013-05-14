@@ -39,17 +39,19 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
   
 
   //vector<Rect> roi;
-
+  /*
   for(auto it(m_roi.begin()); it != m_roi.end(); ++it)
   {
     if((*it).second > 2)
       m_roi.erase(it);
     else
       ++(*it).second;
-  }
+  }*/
 
   if(m_lastFrame.data)
   {
+    Mat alle;
+    Mat changeak;
     Mat change = abs(m_lastFrame - frame);
     imshow("changevor", change);
     //Mat show = change.clone();
@@ -66,11 +68,11 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
 
     Canny(change,edges, 50,70);
     findContours(edges,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-    std::cout << "Found " << contours.size() << " contours." << std::endl;
+    //std::cout << "Found " << contours.size() << " contours." << std::endl;
     for( int i = 0; i< contours.size(); i++ )
     {
-      cout << "Area: " << contourArea(contours[i]) << endl;
-      if(contourArea(contours[i]) > 15.0)
+      //cout << "Area: " << contourArea(contours[i]) << endl;
+      if(contourArea(contours[i]) > 0.0)
       {
         bigcontours.push_back(contours[i]);
         //roi.push_back(boundingRect(Mat(contours[i])));
@@ -78,17 +80,19 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     }
     drawContours(change,bigcontours,-1,Scalar(0,0,255),2);
     imshow("change", change);
-
+    alle = change.clone();
+    changeak = change.clone();
     
     Mat frameRoiContours = frame.clone();
+    vector<ROI> toAdd;
     std::vector<std::vector<cv::Point> > contoursFrame;
     for( int i = 0; i< bigcontours.size(); i++ )
     {
       double area = contourArea(bigcontours[i]);
       Rect rect = boundingRect(Mat(bigcontours[i]));
       
-      double dx = rect.width * 0.5;
-      double dy = rect.height * 0.5;
+      double dx = rect.width * 0.25;
+      double dy = rect.height * 0.25;
       rect.x -= dx;
       rect.width += 2 * dx;
       rect.y -= dy;
@@ -96,22 +100,32 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       if(rect.x < 0)
         rect.x = 0;
       if(rect.x + rect.width > frame.size().width)
-      {
-        cout << "rand x\n";
         rect.width = frame.size().width - rect.x;
-      }
       if(rect.y < 0)
         rect.y = 0;
       if(rect.y + rect.height > frame.size().height)
-      {
-        cout << "rand y\n";
         rect.height = frame.size().height - rect.y;
+
+      ROI ak(rect);
+      float conf;
+      ROI found;
+      rectangle(changeak, rect.tl(), rect.br(), Scalar(255,0,0));
+      if(find(ak, found))
+        conf = found.conf;
+      else
+      {
+        //ak.conf = (area * area) / 4000.0f;
+        if(ak.rect.x < 3 || ak.rect.y < 3 || frame.size().width - (ak.rect.x + ak.rect.width) < 3 || frame.size().height - (ak.rect.y + ak.rect.height) < 3)
+          ak.conf = 0.13 + (area * area) / 4000.0f;
+        else
+          ak.conf = 0;
+        if(ak.conf > 1)
+          ak.conf = 1;
+        conf = ak.conf;
+        toAdd.push_back(ak);
       }
-
-      m_roi.push_back(make_pair(rect, 1));
-      
-      rectangle(change, rect.tl(), rect.br(), Scalar(255,0,0));
-
+      if(conf > 0.2)
+        rectangle(change, rect.tl(), rect.br(), Scalar(255,0,0));
       /*
       std::vector<std::vector<cv::Point> > contoursTmp;
       Mat frameROI(frame, rect);
@@ -129,9 +143,15 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       */
     }
     imshow("changeOpening", change);
+    m_roi.insert(m_roi.end(), toAdd.begin(), toAdd.end());
+    for(const ROI& roi : m_roi)
+    {
+      if(roi.conf > 0.2)
+        rectangle(alle, roi.rect.tl(), roi.rect.br(), Scalar(255,0,0));
+    }
+    imshow("frameroiContours", alle);
+    imshow("changeak", changeak);
   }
-
-
   // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
   // online_variance
 
@@ -141,7 +161,14 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     for(int y = 0; y < frame.size().height; ++y)
     {        
       if(inAnyRect(Point(x,y)))
+      {
+        for(int i = 0; i < 3; ++i)
+        {
+          m_M2.at<Vec3f>(y,x).val[i] = 0;
+          m_sigma.at<Vec3f>(y,x).val[i] = 0;
+        }
         continue;
+      }
       for(int i = 0; i < 3; ++i)
       {
         float f = frame.at<Vec3b>(y, x).val[i];
@@ -200,6 +227,30 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     //}
     
     
+  for(auto it(m_roi.begin()); it != m_roi.end();)
+  {
+    if((*it).conf > 0.0)
+    {
+      cout << "x: " << (*it).rect.x << " y: " << (*it).rect.y << " w: " << (*it).rect.width << " h: " << (*it).rect.height << endl;
+      cout << "velx: " << (*it).velx << " vely: " << (*it).vely << " conf: " << (*it).conf << " cframes: " << (*it).cframes << " cfound: " << (*it).cfound << endl;
+      cout << endl;
+    }
+    ++(*it).cframes;
+    float diff = static_cast<float>((*it).cframes - (*it).cfound);
+    if(diff <= 1)
+      diff = 1.82;
+    (*it).conf /= (0.55f * diff);
+    auto del = it;
+    ++it;
+    if(it == m_roi.end())
+      break;
+    if((*del).conf < 0.01)
+    {
+      m_roi.erase(del);
+    }
+    
+  }
+  cout << "---------------------------\n";
 
 
   
@@ -213,12 +264,52 @@ void Background::getBackgroundImage(cv::Mat& back) const
   //m_mean.convertTo(back, IPL_DEPTH_16U);
 }
 
-bool Background::inAnyRect(cv::Point p) const
+bool Background::inAnyRect(const cv::Point& p) const
 {
-  for(const pair<Rect, float>& rect : m_roi)
+  for(const ROI& roi : m_roi)
   {
-    if(rect.first.contains(p))
+    if(roi.conf > 0.2 && roi.rect.contains(p))
       return true;
+  }
+  return false;
+}
+
+bool Background::find(const ROI& roi, ROI& ret)
+{
+  for( ROI& roi2 : m_roi)
+  {
+    if(roi2.velx == 0 && roi2.vely == 0)
+    {
+      if(abs(roi2.rect.x - roi.rect.x) < roi2.rect.width * 0.2 && abs(roi2.rect.y - roi.rect.y) < roi2.rect.height * 0.2
+        && abs(roi2.rect.width - roi.rect.width) < 20 && abs(roi2.rect.height - roi.rect.height) < 20)
+      {
+        roi2.conf *= 4;
+        if(roi2.conf > 1)
+          roi2.conf = 1;        
+        ++roi2.cfound;
+        roi2.velx = abs(roi2.rect.x - roi.rect.x);
+        roi2.vely = abs(roi2.rect.y - roi.rect.y);
+        roi2.rect = roi.rect;
+        ret = roi2;
+        return true;
+      }
+    }
+    else
+    {
+      if(abs(roi2.rect.x - roi.rect.x) < roi2.rect.width * 0.1 + roi2.velx && abs(roi2.rect.y - roi.rect.y) < roi2.rect.height * 0.1 + roi2.vely
+        && abs(roi2.rect.width - roi.rect.width) < 20 && abs(roi2.rect.height - roi.rect.height) < 20)
+      {
+        roi2.conf *= 4;
+        if(roi2.conf > 1)
+          roi2.conf = 1;        
+        ++roi2.cfound;
+        roi2.velx = abs(roi2.rect.x - roi.rect.x);
+        roi2.vely = abs(roi2.rect.y - roi.rect.y);
+        roi2.rect = roi.rect;
+        ret = roi2;
+        return true;
+      }
+    }
   }
   return false;
 }

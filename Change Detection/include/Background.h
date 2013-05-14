@@ -3,6 +3,19 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
+struct ROI
+{
+  ROI(const cv::Rect& r) : rect(r), conf(0.0f), velx(0.0f), vely(0.0f), cframes(1), cfound(0) {}
+  ROI() {}
+  cv::Rect rect;
+  float conf;
+  float velx;
+  float vely;
+
+  size_t cframes;
+  size_t cfound;
+};
+
 class Background
 {
 public:
@@ -15,7 +28,9 @@ public:
 	void getBackgroundImage(cv::Mat& back) const;
 
 private:
-  bool inAnyRect(cv::Point p) const;
+  bool inAnyRect(const cv::Point& p) const;
+
+  bool Background::find(const ROI& roi, ROI& ret);
 
 private:
 
@@ -37,7 +52,7 @@ private:
 
   cv::Mat m_lastFrame;
 
-  std::list<std::pair<cv::Rect, float>> m_roi;
+  std::list<ROI> m_roi;
 
   
 
