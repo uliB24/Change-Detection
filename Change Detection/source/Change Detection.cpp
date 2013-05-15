@@ -26,8 +26,8 @@ namespace
 {
   //Konstanten:
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/canoe/input/in"; // 4 sigma, 1x1 erode
-  string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // 6 sigma + 3x3 erode
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in";
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // 6 sigma + 3x3 erode
+  string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in";
   
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/highway/input/in"; // klappt nicht gut, da autos schon am Anfang da lang fahren
   // -> bei der erstellung der Varianz muss bereits erkannt werden, dass fahrende Autos nicht in die Varianz und den Hintergrund einflieﬂen
@@ -87,6 +87,10 @@ int main(int argc, char *argv[])
 
   namedWindow("frameroiContours");
 
+  namedWindow("features");
+  namedWindow("status");
+  namedWindow("err");
+
   size_t count = 0;
 
   while(true)
@@ -97,21 +101,21 @@ int main(int argc, char *argv[])
     oss << std::setfill ('0') << std::setw (6);
     oss << count << ".jpg";
 
-    Mat frame = imread(oss.str(), CV_LOAD_IMAGE_COLOR);
+    Mat frame = imread(oss.str(), CV_LOAD_IMAGE_COLOR);//CV_LOAD_IMAGE_GRAYSCALE
     if(!frame.data)
       return false;
 
     bg.update(frame, fore);
 
-    imshow("fore",fore);
+    //imshow("fore",fore);
 
-    bg.getBackgroundImage(back);
+    //bg.getBackgroundImage(back);
 
-    findContours(fore,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-    drawContours(frame,contours,-1,Scalar(0,0,255),2);
+    //findContours(fore,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+    //drawContours(frame,contours,-1,Scalar(0,0,255),2);
 
-    imshow("Frame",frame);
-    imshow("Background",back);
+    //imshow("Frame",frame);
+    //imshow("Background",back);
     //waitKey(0);
     if(waitKey(30) >= 0) break;
   }

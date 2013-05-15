@@ -35,7 +35,7 @@ private:
 private:
 
 	cv::BackgroundSubtractorMOG2 m_bg;
-	
+	int count;
 	cv::Mat m_mean;
 	cv::Mat m_M2;
 	cv::Mat m_sigma;
@@ -54,7 +54,8 @@ private:
 
   std::list<ROI> m_roi;
 
-  
+  cv::Mat image_prev, image_next;
+  std::vector<cv::Point> features_prev, features_next;
 
 };
 

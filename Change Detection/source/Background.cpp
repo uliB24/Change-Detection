@@ -30,8 +30,8 @@ Background::Background(string path, size_t erosion_size, size_t dilatation_size,
 	ostringstream oss;
 	oss << m_path;
 	oss << std::setfill ('0') << std::setw (6);
-    oss << 1 << ".jpg";
-	Mat frame = imread(oss.str(), CV_LOAD_IMAGE_COLOR);
+  oss << 1 << ".jpg";
+	Mat frame = imread(oss.str(), CV_LOAD_IMAGE_COLOR);//CV_LOAD_IMAGE_GRAYSCALE
 
 	m_mean  = Mat(frame.size(), CV_32FC3, Scalar(0.0f,0.0f,0.0f));
   m_M2	= Mat(frame.size(), CV_32FC3, Scalar(0.0f,0.0f,0.0f));
@@ -39,6 +39,24 @@ Background::Background(string path, size_t erosion_size, size_t dilatation_size,
 
   m_erosionKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*erosion_size + 1, 2*erosion_size+1 ), Point( erosion_size, erosion_size ) );
   m_dilatationKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*dilatation_size + 1, 2*dilatation_size+1 ), Point(dilatation_size, dilatation_size ) );
+
+  /*
+  //Mat f;
+  //cv::cvtColor(frame,image_next, CV_BGR2GRAY);
+  //imshow("fratures", f);
+  //buildOpticalFlowPyramid(f, image_next, Size(21,21), 2);
+image_next = frame;
+
+//frame.convertTo(image_next, CV_32F);
+  // Obtain initial set of features
+  cv::goodFeaturesToTrack(image_next, // the image 
+  features_next,   // the output detected features
+  20,  // the maximum number of features 
+  0.01,     // quality level
+  10     // min distance between two features
+);
+  count = 0;
+  */
 }
 
 
@@ -46,11 +64,52 @@ Background::~Background(void)
 {
 }
 
+/*
+http://stackoverflow.com/questions/9701276/opencv-tracking-using-optical-flow
+http://opencv.willowgarage.com/documentation/cpp/motion_analysis_and_object_tracking.html
+
+Idee: 
+goodFeaturesToTrack weglasssen und Inputpunkte für
+calcOpticalFlowPyrLK selber bestimmen (Dinge vom Rand)
+-> Tracken mit calcOpticalFlowPyrLK
+*/
+
 void Background::update(const cv::Mat& frame, cv::Mat& fore)
 {
+  /*
+  
+  image_prev = image_next.clone();
+  features_prev = features_next;
+  //Mat f;
+  //cv::cvtColor(frame,f, CV_BGR2GRAY);
+  //buildOpticalFlowPyramid(f, image_next, Size(21,21), 2);
+  vector<uchar> status;
+  image_next = frame;
+  //frame.convertTo(image_next, CV_32F);
+  //cv::cvtColor(frame,image_next, CV_BGR2GRAY);
+  vector<float> err;
+  int a = Mat(features_prev).checkVector(2, CV_32F, true);
+  if(count == 0)
+  {
+    ++count;
+    return;
+  }
+    // Find position of feature in new image
+    cv::calcOpticalFlowPyrLK(
+      image_prev, image_next, // 2 consecutive images
+      features_prev, // input point positions in first im
+      features_next, // output point positions in the 2nd
+      status,    // tracking success
+      err      // tracking error
+    );
+    imshow("fratures", features_next);
+    imshow("status", status);
+    imshow("err", err);
+    return;
   fore = Mat(frame.size(), CV_8U);
   ++m_n;
   
+  */
 
   //vector<Rect> roi;
   /*
