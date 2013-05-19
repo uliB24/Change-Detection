@@ -22,10 +22,12 @@ namespace
   };
 
   Rect bRect(const vector<Point>& vec);
+
+ 
 }
 
-Background::Background(string path, size_t erosion_size, size_t dilatation_size, size_t numSigma)
-  : m_path(path), m_n(0), m_numSigma(numSigma)
+Background::Background(string path, size_t erosion_size, size_t dilatation_size, size_t numSigma, int history, float varThreshold, bool bShadowDetection)
+  : m_path(path), m_n(0), m_numSigma(numSigma), m_bg(history, varThreshold, bShadowDetection)
 {
 	ostringstream oss;
 	oss << m_path;
@@ -68,14 +70,50 @@ Background::~Background(void)
 http://stackoverflow.com/questions/9701276/opencv-tracking-using-optical-flow
 http://opencv.willowgarage.com/documentation/cpp/motion_analysis_and_object_tracking.html
 
+http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html
 Idee: 
 goodFeaturesToTrack weglasssen und Inputpunkte für
 calcOpticalFlowPyrLK selber bestimmen (Dinge vom Rand)
 -> Tracken mit calcOpticalFlowPyrLK
+
+
+
+http://docs.opencv.org/modules/imgproc/doc/histograms.html
+EMD -> minimale Distanz zwischen 2 gewichteten Punktwolken
+
+
+http://docs.opencv.org/trunk/modules/videostab/doc/global_motion.html#videostab-motionmodel
+motionModel
++ samples/videostab.cpp
+
+http://opencv.willowgarage.com/documentation/c/imgproc_structural_analysis_and_shape_descriptors.html
+cvMatchShapes
+2 Bilder oder Punktewolken vergleichen
+
+http://bytesandlogics.wordpress.com/2012/08/23/detectionbasedtracker-opencv-implementation/
+DetectionBasedTracker 
+OpenCV Haar implementation
+
+http://www.intorobotics.com/how-to-detect-and-track-object-with-opencv/
+überblick
+
+
+http://www.pages.drexel.edu/~nk752/tutorials.html
+Tutorials
+
+http://dasl.mem.drexel.edu/~noahKuntz/openCVTut9.html
+Tutorial Optical Flow und Kalman
+
+Learning OpenCV: Computer Vision with the OpenCV Library (Buch 33 Doller)
+
+cppreference.com
+
 */
 
 void Background::update(const cv::Mat& frame, cv::Mat& fore)
 {
+  fore = Mat(frame.size(), CV_8U);
+  ++m_n;
   /*
   
   image_prev = image_next.clone();
@@ -106,8 +144,7 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     imshow("status", status);
     imshow("err", err);
     return;
-  fore = Mat(frame.size(), CV_8U);
-  ++m_n;
+  
   
   */
 
@@ -262,7 +299,7 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       }
       */
     }
-    imshow("changeOpening", change);
+    //imshow("changeOpening", change);
     m_roi.insert(m_roi.end(), toAdd.begin(), toAdd.end());
     for(const ROI& roi : m_roi)
     {
@@ -273,8 +310,8 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     imshow("changeak", changeak);
 
 
-    imshow("alleRechtecke", r1);
-    imshow("Rechtecke", r2);
+    //imshow("alleRechtecke", r1);
+    //imshow("Rechtecke", r2);
   }
   // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
   // online_variance
@@ -288,8 +325,8 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       {
         for(int i = 0; i < 3; ++i)
         {
-          m_M2.at<Vec3f>(y,x).val[i] = 0;
-          m_sigma.at<Vec3f>(y,x).val[i] = 0;
+          m_M2.at<Vec3f>(y,x).val[i] *= 0.9;
+          m_sigma.at<Vec3f>(y,x).val[i] = 0.9;
         }
         continue;
       }
@@ -350,7 +387,7 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     //  }
     //}
     
-    
+    /*
   for(auto it(m_roi.begin()); it != m_roi.end();)
   {
     if((*it).conf > 0.0)
@@ -376,7 +413,7 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
     
   }
   cout << "---------------------------\n";
-
+  */
 
   
 
@@ -466,5 +503,6 @@ Rect bRect(const vector<Point>& vec)
   }
   return Rect(minx, miny, maxx - minx, maxy - miny);
 }
+
 
 } // namespace

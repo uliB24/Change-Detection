@@ -19,7 +19,7 @@ struct ROI
 class Background
 {
 public:
-	Background(std::string path, size_t erosion_size = 2, size_t dilatation_size = 2, size_t numSigma = 3);
+	Background(std::string path, size_t erosion_size = 2, size_t dilatation_size = 2, size_t numSigma = 3, int history = 500, float varThreshold = 64.0, bool bShadowDetection = true);
 	~Background(void);
 
 public:
