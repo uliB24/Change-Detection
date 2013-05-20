@@ -3,19 +3,6 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-struct ROI
-{
-  ROI(const cv::Rect& r) : rect(r), conf(0.0f), velx(0.0f), vely(0.0f), cframes(1), cfound(0) {}
-  ROI() {}
-  cv::Rect rect;
-  float conf;
-  float velx;
-  float vely;
-
-  size_t cframes;
-  size_t cfound;
-};
-
 class Background
 {
 public:
@@ -51,17 +38,15 @@ private:
 
   cv::Mat m_lastFrame;
 
-  //std::list<ROI> m_roi;
   std::vector<std::vector<cv::Point2f> > m_contours_prev, m_contours_next;
 
-  std::vector<std::vector<std::pair<int, cv::Point3i>>> m_notMoved;
+  std::vector<std::vector<cv::Point3i>> m_notMoved;
 
   std::vector<cv::Rect> m_rects;
 
   cv::Mat image_prev, image_next;
 
   cv::Rect m_frameRect;
-  //std::vector<cv::Point> features_prev, features_next;
 
 };
 

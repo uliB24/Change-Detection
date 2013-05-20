@@ -12,17 +12,7 @@ using namespace cv;
 
 namespace
 {
-  struct comRect
-  {
-    comRect() {}
-    comRect(Rect r, bool m, double a) : rect(r), merged(m), maxArea(a) {}
-    Rect rect;
-    bool merged;
-    double maxArea;
-  };
-
-  //bool inAnyRect(const cv::Point& p, const vector<cv::Rect> rects);
-
+  //lokale Funktionen
  
 }
 
@@ -51,49 +41,7 @@ Background::~Background(void)
 {
 }
 
-/*
-http://stackoverflow.com/questions/9701276/opencv-tracking-using-optical-flow
-http://opencv.willowgarage.com/documentation/cpp/motion_analysis_and_object_tracking.html
 
-http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html
-Idee: 
-goodFeaturesToTrack weglasssen und Inputpunkte für
-calcOpticalFlowPyrLK selber bestimmen (Dinge vom Rand)
--> Tracken mit calcOpticalFlowPyrLK
-
-
-
-http://docs.opencv.org/modules/imgproc/doc/histograms.html
-EMD -> minimale Distanz zwischen 2 gewichteten Punktwolken
-
-
-http://docs.opencv.org/trunk/modules/videostab/doc/global_motion.html#videostab-motionmodel
-motionModel
-+ samples/videostab.cpp
-
-http://opencv.willowgarage.com/documentation/c/imgproc_structural_analysis_and_shape_descriptors.html
-cvMatchShapes
-2 Bilder oder Punktewolken vergleichen
-
-http://bytesandlogics.wordpress.com/2012/08/23/detectionbasedtracker-opencv-implementation/
-DetectionBasedTracker 
-OpenCV Haar implementation
-
-http://www.intorobotics.com/how-to-detect-and-track-object-with-opencv/
-überblick
-
-
-http://www.pages.drexel.edu/~nk752/tutorials.html
-Tutorials
-
-http://dasl.mem.drexel.edu/~noahKuntz/openCVTut9.html
-Tutorial Optical Flow und Kalman
-
-Learning OpenCV: Computer Vision with the OpenCV Library (Buch 33 Doller)
-
-cppreference.com
-
-*/
 
 /** @brief updaten des Hintergrundes mit dem aktuellen Frame und Berechnung der Vordergrundmatrix
 
@@ -103,111 +51,66 @@ cppreference.com
     255: Vordergrundobjekt
     
     Bei der Berechnung der Vordergrundmatrix wird der BackgroundSubtractorMOG2 verwendet.
-    Dieser ...(in Buch nachlesen)
+    Dieser hält für jeden Pixel mehrere Gausverteilungen(Mittelwert + Varianz).
+    Wenn ein Pixelwert außerhalb der Graußverteilungen ist(es gehört somit zum Vordergrund), wird eine neue Verteilung hinzugenommen.
+    Wird diese Verteilung später öfter getroffen, gehört diese zum Hintergrund
 
     Um dynamischen Hintergrund besser herrauszufiltern, wird für jeden Pixel die Varianz berechnet.
     Für Pixel, die sich nicht in der m_sigma-Umgebung befinden, wird der Wert aus der Vordergrundmatrix des BackgroundSubtractorMOG2 übernommen.
+    Damit die Varianz aber nur in den Bereichen hoch ist, in denen sich dynamischer Hintergrund befindet und nicht dort, wo sich Vordergrundobjekte bewegen,
+    werden die Vordergrundobjekte getrackt und aus der Berechnung der Varianz herreusgenommen.
 */
 void Background::update(const cv::Mat& frame, cv::Mat& fore)
 {
-  // Vordergrundmatrix anglegen, 8-bit mit einem Kanal
+  // Vordergrundmatrix anglegen
   fore = Mat(frame.size(), CV_8U);
   ++m_n;
   cvtColor(frame, image_next, CV_BGR2GRAY);
 
-  Mat change;
-  std::vector<std::vector<cv::Point> > strongContours;
-  if(m_lastFrame.data)
-  {
-    absdiff(m_lastFrame, frame, change);
-    /*
-    size_t size = 1;
-    Mat erosionKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point( size, size ) );
-    Mat dilatationKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point(size, size ) );
-    erode(change,change,erosionKernel);
-    dilate(change,change,dilatationKernel);
-    */
-    Mat strongEdges;
-    Canny(change,strongEdges, 170,190);
-    imshow("canny", strongEdges);   
-    findContours(strongEdges,strongContours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-  }
-  vector<Rect> strongRects;
-  
-  //vector<Mat> strongMasks;
-  Mat imgStrong = frame.clone();
-  for(size_t i = 0; i < strongContours.size(); ++i)
-  {
-    strongRects.push_back(boundingRect(strongContours[i]));
-    rectangle(imgStrong, strongRects.back(), Scalar(255,0,0));
-  }
-  imshow("strongRects",imgStrong);
-  //Idee: counturen auf strken kanten finden -> boundig Rects berechnen, wenn sich ein getrackter Punkt in dem Boundig Rect befindet und wenige Punkte zu diesem getracken Punkt gehöhren -> goodFeatures finden und zu diesen Punkten hinzufügen, am bestem in der anderen Schleife oben, wegen den iteratoren, es muss nur das Differenzbild 2 mal berechnet werden(oder auch nicht, vorher berechnen)
-  vector<bool> strongRectfound(strongRects.size(), false);
-
   Mat track = frame.clone();
   m_contours_next.clear();
   m_rects.clear();
-  //size_t c_c = 0;
   vector<Rect> bRects;
   auto itnm = m_notMoved.begin();
   std::vector<std::vector<cv::Point2f> > contours_next;
+  // Über alle Gruppen von Feature-Punkten des letzten Frames iterieren
   for(auto points : m_contours_prev)
   {
     vector<Point2f> nextPoints;
     vector<uchar> status;
     vector<float> err;
+    // Featuere Punkte mit optischem Fluss tracken
     cv::calcOpticalFlowPyrLK(
-      image_prev, image_next, // 2 consecutive images
-      points, // input point positions in first im
-      nextPoints, // output point positions in the 2nd
-      status,    // tracking success
-      err,      // tracking error
-      Size(21,21),
-      3,
-      TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 30, 0.01),
-      0,
-      1e-4
-      );
-    
-    //if(nextPoints.size() != (*itnm).size())
-      //cout << "Points: " << points.size() << " nextPoints: " << nextPoints.size() << " m_notMoved: " << (*itnm).size() << "\n";
+      image_prev, image_next,
+      points, nextPoints,
+      status, err, Size(21,21), 3, TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 30, 0.01), 0, 1e-4);
+
     auto itm = (*itnm).begin();
     auto itp = nextPoints.begin();
-    //vector<std::vector<std::vector<int>>::iterator> toDelete;
     Scalar mean;
     Scalar stddev;
     meanStdDev(Mat(nextPoints), mean, stddev);
-    cout << "x: " << stddev[0] << " y: " << stddev[1] << endl;
+    // Über alle Feature-Punkte dieser Gruppe iterieren 
     for(int i = 0; i < nextPoints.size(); ++i)
     {
       if(status[i] == 1)
       {
         circle(track, Point(nextPoints[i].x, nextPoints[i].y), 2, Scalar(255,0,0));
-        //cout << err[i] << endl;
-      }
-      int vel = (nextPoints[i].x - points[i].x)*(nextPoints[i].x - points[i].x) + (nextPoints[i].y - points[i].y)*(nextPoints[i].y - points[i].y);
-      //int vel = abs(nextPoints[i] - points[i]);
-      if(vel < 1)
-      {
-        (*itnm)[i].first += 1;
-        
-      }
-      else
-      {
-        (*itnm)[i].first -= vel;
-        if((*itnm)[i].first < -3)
-          (*itnm)[i].first = -3;
       }
       bool del = false;
-      if((*itnm)[i].second.z == 8)
+      if((*itm).z == 10)
       {
-        if((nextPoints[i].x - (*itnm)[i].second.x)*(nextPoints[i].x - (*itnm)[i].second.x) + (nextPoints[i].y - (*itnm)[i].second.y)*(nextPoints[i].y - (*itnm)[i].second.y) < 5)
+        // Wenn der Punkt sich in den letzten 10 Frames um weniger als sqrt(5) Pixel bewegt hat, wird er nicht mehr getrackt
+        if((nextPoints[i].x - (*itm).x)*(nextPoints[i].x - (*itm).x) + (nextPoints[i].y - (*itm).y)*(nextPoints[i].y - (*itm).y) < 5)
+        {
           del = true;
-        (*itnm)[i].second.z == 0;
+        }
+        (*itm).z = 0;
+        (*itm).x = nextPoints[i].x;
+        (*itm).y = nextPoints[i].y;
       }
       else
-        ++(*itnm)[i].second.z;
+        ++(*itm).z;
       const int sigma = 3;
       int minx = mean[0] - sigma * stddev[0];
       if(minx < 0)
@@ -221,10 +124,9 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       int maxy = mean[1] + sigma * stddev[1];
       if(maxy > m_frameRect.br().y)
         maxy = m_frameRect.br().y;
-      if(del || (*itnm)[i].first > 5 || !m_frameRect.contains(nextPoints[i]) ||  // Punkt hat sich lange nicht bewegt oder ist außerhalb des Bildes
-        nextPoints[i].x < minx || nextPoints[i].x > maxx || nextPoints[i].y < miny || nextPoints[i].y > maxy) // oder befindet wich relativ zu den anderen Punkten weit weg  -> löschen
+      if(del || !m_frameRect.contains(nextPoints[i]) ||  // Punkt hat sich lange nicht bewegt oder ist außerhalb des Bildes
+        nextPoints[i].x < minx || nextPoints[i].x > maxx || nextPoints[i].y < miny || nextPoints[i].y > maxy) // oder befindet sich relativ zu den anderen Punkten weit weg  -> löschen
       {
-        // Das ist ziemlich unschön und fehleranfällig
         --i; // muss um eins verringert werden, da durch erase alle nachfolgenden Elemente umkopiert werden
         itm = (*itnm).erase(itm);
         itp = nextPoints.erase(itp);
@@ -237,13 +139,14 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       if(nextPoints.size() == 0)
         break;
     }
-
     bool nextit = false;
     if(!nextPoints.empty())
     {
+      // Boundingbox von den Punkten dieser Gruppe berechnen und in abhängigkeit der Standartabweichung der Punkte vergrößern
+      // Boundingbox wird umso sehr vergrößert, je kleiner die Standartabweichung ist 
       Rect rect = boundingRect(nextPoints);
-      double dx = rect.width * (0.7/ sqrt(stddev[0]));
-      double dy = rect.height * (0.7/ sqrt(stddev[1]));
+      int dx = rect.width * (0.7/ sqrt(stddev[0]));
+      int dy = rect.height * (0.7/ sqrt(stddev[1]));
       rect.x -= dx;
       rect.width += 2 * dx;
       rect.y -= dy;
@@ -257,99 +160,27 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       if(rect.y + rect.height > frame.size().height)
         rect.height = frame.size().height - rect.y;
 
-      
-      vector<int> numInRect(strongRects.size(), 0);
-      for(auto p : nextPoints)
-      {
-        for(size_t i = 0; i < strongRects.size(); ++i)
-        {
-          if(strongRects[i].contains(p))
-          {
-            ++numInRect[i];
-            strongRectfound[i] = true;
-          }
-        }
-      }
-      size_t idx;
-      int max = -1;
-      for(size_t i = 0; i < numInRect.size(); ++i)
-      {
-        if(numInRect[i] > max)
-        {
-          idx = i;
-          max = numInRect[i];          
-        }
-      }
-      /*
-      if(points.size() < 10) // neue Punkte für dieses zu Trackende finden, da nicht alle Punkte mitgetrackt werden
-      {
-        if(max > nextPoints.size() * 0.75)  //min 66% der Punkte sind in dieser Boundingbox
-        {
-          
-          //Punkte auffrischen
-          vector<Point> poly;
-          convexHull(strongContours[idx], poly);
-          Mat mask(frame.size(), CV_8UC1, Scalar(0));
-          fillConvexPoly(mask, poly, Scalar(255));
-          
-          vector<Point2f> corners;
-          goodFeaturesToTrack(image_next, corners, 10, 0.01, 2, mask);
-          if(!corners.empty())
-          {
-            nextPoints.insert(nextPoints.end(), corners.begin(), corners.end());
-            //bRects.push_back(boundingRect(corners));
-            (*itnm).insert((*itnm).end(), corners.size(), 0);
-            //m_notMoved.push_back(vector<int>(corners.size(), 0));
-          }
-        }
-      }
-      */
       contours_next.push_back(nextPoints);
       bRects.push_back(rect);
-      //if(rect.width * rect.height > 400)
-        //rectangle(track, m_rects.back().tl(), m_rects.back().br(), Scalar(0,255,0));
     }
     else
     {
+      // alle Punkte dieser Gruppe wurden gelöscht
       if((*itnm).empty())
       {
         itnm = m_notMoved.erase(itnm);
         nextit = true;
       }
-      else
-        cout << "Achtung\n";
     }
     if(!nextit)
       ++itnm;
   }
   if(!contours_next.empty())
   {
-    for(int i = 0; i < strongRectfound.size(); ++i)
-    {
-      // starke Konturen, zu denen es keine passenden zu trackenden Punkte gibt, werden hinzugefügt
-      if(!strongRectfound[i])
-      {
-        vector<Point> poly;
-        convexHull(strongContours[i], poly);
-        Mat mask(frame.size(), CV_8UC1, Scalar(0));
-        fillConvexPoly(mask, poly, Scalar(255));
-
-        vector<Point2f> corners;
-        goodFeaturesToTrack(image_next, corners, 10, 0.1, 2, mask);
-        if(!corners.empty())
-        {
-          contours_next.push_back(corners);
-          bRects.push_back(boundingRect(corners));
-          vector<pair<int, Point3i>> vec;
-          for(auto p : corners)
-          {
-            vec.push_back(make_pair(0, Point3i(p.x,p.y, 0)));
-          }
-          m_notMoved.push_back(vec);
-        }
-      }
-    }
-    std::vector<std::vector<std::pair<int, cv::Point3i>>> notMoved = m_notMoved;
+    // Zusammenfassen von Punkteregionen p1 und p2, wenn
+    // sich alle Punkte von p1 in der Boundingbox von p2 befinden oder umgekehrt
+    // oder sich die Boundingboxen der Punkteregionen zu min. 80% überdecken
+    std::vector<std::vector<cv::Point3i>> notMoved = m_notMoved;
     vector<bool> merged(bRects.size(), false);
     for(size_t i = 0; i < bRects.size(); ++i)
     {
@@ -379,7 +210,7 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
           continue;
         Rect min = bRects[i] & bRects[j];
         if((min.width != 0 || min.height != 0) &&  // Schnitt
-          (min.width * min.height > bRects[i].width * bRects[i].height * 0.8 || min.width * min.height > bRects[j].width * bRects[j].height * 0.8)) // Schnittrecht ist zu 80% in einem der beiden Rectecke drin
+          (min.width * min.height > bRects[i].width * bRects[i].height * 0.8 || min.width * min.height > bRects[j].width * bRects[j].height * 0.8)) // Schnittrecht ist zu 80% in einem der beiden Rectecke enthalten
         {
           bRects[i] |= bRects[j];
           merged[j] = true;
@@ -406,70 +237,53 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
 
   if(m_lastFrame.data)
   {
-    //Mat change = abs(m_lastFrame - frame);
-    imshow("changevor", change);
-    //Mat show = change.clone();
-    //Mat show; //= Mat(change.size(), IPL_DEPTH_16U, Scalar(0,0,0));
+    Mat change;
+    //Differenzbild der letzten beiden Frames berechnen
+    absdiff(m_lastFrame, frame, change);
     Mat edges;
     std::vector<std::vector<cv::Point> > contours;
-    //cvtColor( change, change, CV_BGR2GRAY );
-    /*size_t size = 0;
-    Mat erosionKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point( size, size ) );
-    Mat dilatationKernel = getStructuringElement( MORPH_ELLIPSE, Size( 2*size + 1, 2*size+1 ), Point(size, size ) );
-    erode(change,change,erosionKernel);
-    dilate(change,change,dilatationKernel);*/
     imshow("change", change);
-    Canny(change,edges, 70,80);
+    Canny(change,edges, 70,90);
+    // Konturen auf dem Differenzbild finden
     findContours(edges,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-
-    //std::cout << "Found " << contours.size() << " contours." << std::endl;
     for( size_t i = 0; i< contours.size(); i++ )
     {
-      //cout << "Area: " << contourArea(contours[i]) << endl;
-      if(contourArea(contours[i]) > 0.0)
+      Rect rect = boundingRect(contours[i]);
+      vector<Point> points;
+      // nur die Punkte am Bildrand werden hinzunehmen, um sie zu tracken
+      if(rect.x < 10 || rect.y < 10 || frame.size().width - (rect.x + rect.width) < 10 || frame.size().height - (rect.y + rect.height) < 10)
+        for(auto p : contours[i])
+          if(!inAnyRect(p))
+            points.push_back(p);
+      // Wenn mindestens die Hälfte der Punkte dieser Kontur noch nicht in den BoundigBoxen der anderen Konturen enthalten sind, wird diese Kontur nun auch getrackt
+      if(points.size() > contours[i].size() * 0.75)
       {
-        Rect rect = boundingRect(contours[i]);
-        vector<Point> points;
-        // nur die Punkte am Anfang hinzunehmen, die am Rand sind
-        if(rect.x < 10 || rect.y < 10 || frame.size().width - (rect.x + rect.width) < 10 || frame.size().height - (rect.y + rect.height) < 10)
-          for(auto p : contours[i])
-            if(!inAnyRect(p))
-              points.push_back(p);
-        if(points.size() > contours[i].size() * 0.75)  // Wenn mindestens die Hälfte der Punkte dieser Kontur noch nicht in den BoundigBoxen der anderen Konturen enthalten sind, wird diese Kontur nun auch getrackt
+        vector<Point> poly;
+        convexHull(contours[i], poly);
+        Mat mask(frame.size(), CV_8UC1, Scalar(0));
+        fillConvexPoly(mask, poly, Scalar(255));
+        // in der konvexen Hülle der Konturen werden gut trackbare Features gesucht
+        vector<Point2f> corners;
+        goodFeaturesToTrack(image_next, corners, 10, 0.01, 2, mask);
+        if(!corners.empty())
         {
-          vector<Point> poly;
-          convexHull(contours[i], poly);
-          Mat mask(frame.size(), CV_8UC1, Scalar(0));
-          fillConvexPoly(mask, poly, Scalar(255));
-          
-          vector<Point2f> corners;
-          goodFeaturesToTrack(image_next, corners, 10, 0.01, 2, mask);
-          if(!corners.empty())
+          m_contours_next.push_back(corners);
+          m_rects.push_back(boundingRect(corners));
+          vector<Point3i> vec;
+          for(auto p : corners)
           {
-            m_contours_next.push_back(corners);
-            m_rects.push_back(boundingRect(corners));
-            vector<pair<int, Point3i>> vec;
-            for(auto p : corners)
-            {
-              vec.push_back(make_pair(0, Point3i(p.x,p.y, 0)));
-            }
-            m_notMoved.push_back(vec);
+            vec.push_back(Point3i(p.x,p.y, 0));
           }
-            /*
-          vector<Point2f> p3f;
-          for(auto p : contours[i])
-            p3f.push_back(Point2f(p.x,p.y));
-          m_contours_next.push_back(p3f);
-          m_rects.push_back(rect);
-          */
+          m_notMoved.push_back(vec);
         }
-          //features_next.insert(features_next.end(), contours[i].begin(), contours[i].end());
       }
     }
   }
-  // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
-  // online_variance
 
+  // Berechnung der Varianz jedes Pixels
+  // Damit nicht alle Pixelwerte gespeichert werden müssen, wird die Varianz online nach Donald Ervin Knuth berechnet:
+  // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
+  // Es werden nur die Pixel mit einbezogen, die sich nicht in einer Boundingbox von getrackten Punktegruppen befinden
   Vec3f delta;
   for(int x = 0; x < frame.size().width; ++x)
   {
@@ -496,14 +310,10 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       }
     }
   }
-
-  //Mat back;
-  //getBackgroundImage(back);
-  //fore = abs(back - frame);
-  //cvtColor( fore, fore, CV_BGR2GRAY );
   
+  // Vordergrundmatrix des BackgroundSubtractorMOG2 berechnen
   m_bg.operator ()(frame,fore);
-  imshow("forevor", fore);
+  //imshow("forevor", fore);
   Mat back;
   getBackgroundImage(back);
 
@@ -521,11 +331,11 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       }
     }
   }
-  imshow("forenach", fore);
-  imshow("mean", m_mean / 255);
+  //imshow("forenach", fore);
+  //imshow("mean", m_mean / 255);
   imshow("var", m_sigma / 255);
   
-  //Opening
+  //Opening -> enfernung von zu kleinen Struckturen
   erode(fore,fore,m_erosionKernel);
   dilate(fore,fore,m_dilatationKernel);
 
