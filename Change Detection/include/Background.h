@@ -30,7 +30,6 @@ public:
 private:
   bool inAnyRect(const cv::Point& p) const;
 
-  bool Background::find(const ROI& roi, ROI& ret);
 
 private:
 
@@ -52,10 +51,17 @@ private:
 
   cv::Mat m_lastFrame;
 
-  std::list<ROI> m_roi;
+  //std::list<ROI> m_roi;
+  std::vector<std::vector<cv::Point2f> > m_contours_prev, m_contours_next;
+
+  std::vector<std::vector<std::pair<int, cv::Point3i>>> m_notMoved;
+
+  std::vector<cv::Rect> m_rects;
 
   cv::Mat image_prev, image_next;
-  std::vector<cv::Point> features_prev, features_next;
+
+  cv::Rect m_frameRect;
+  //std::vector<cv::Point> features_prev, features_next;
 
 };
 

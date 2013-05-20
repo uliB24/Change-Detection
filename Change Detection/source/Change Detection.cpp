@@ -84,15 +84,24 @@ int main(int argc, char *argv[])
   namedWindow("mean");
   namedWindow("var");
 
-  namedWindow("changevor");
-  namedWindow("changeOpening");
+  //namedWindow("changevor");
+  //namedWindow("changeOpening");
   namedWindow("change");
-  namedWindow("changeak");
+  //namedWindow("changeak");
+
+  namedWindow("Track");
+
+  namedWindow("mask");
+
+  namedWindow("canny");
+
+  namedWindow("strongRects");
+
 
   //namedWindow("alleRechtecke");
   //namedWindow("Rechtecke");
 
-  namedWindow("frameroiContours");
+  //namedWindow("frameroiContours");
 
   //namedWindow("features");
   //namedWindow("status");
