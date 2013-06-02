@@ -86,9 +86,11 @@
     <ClCompile Include="source\Background.cpp" />
     <ClCompile Include="source\Change Detection.cpp" />
     <ClCompile Include="source\erosiondilatation.cpp" />
+    <ClCompile Include="source\SOBS_CF.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Background.h" />
+    <ClInclude Include="include\SOBS_CF.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

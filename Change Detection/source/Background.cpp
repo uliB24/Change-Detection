@@ -145,8 +145,8 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       // Boundingbox von den Punkten dieser Gruppe berechnen und in abhängigkeit der Standartabweichung der Punkte vergrößern
       // Boundingbox wird umso sehr vergrößert, je kleiner die Standartabweichung ist 
       Rect rect = boundingRect(nextPoints);
-      int dx = rect.width * (0.7/ sqrt(stddev[0]));
-      int dy = rect.height * (0.7/ sqrt(stddev[1]));
+      int dx = rect.width * (1/ sqrt(stddev[0]));
+      int dy = rect.height * (1/ sqrt(stddev[1]));
       rect.x -= dx;
       rect.width += 2 * dx;
       rect.y -= dy;
@@ -313,7 +313,7 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
   
   // Vordergrundmatrix des BackgroundSubtractorMOG2 berechnen
   m_bg.operator ()(frame,fore);
-  //imshow("forevor", fore);
+  imshow("forevor", fore);
   Mat back;
   getBackgroundImage(back);
 
@@ -331,14 +331,14 @@ void Background::update(const cv::Mat& frame, cv::Mat& fore)
       }
     }
   }
-  //imshow("forenach", fore);
+  imshow("forenach", fore);
   //imshow("mean", m_mean / 255);
   imshow("var", m_sigma / 255);
   
   //Opening -> enfernung von zu kleinen Struckturen
   erode(fore,fore,m_erosionKernel);
   dilate(fore,fore,m_dilatationKernel);
-
+  
 
   m_lastFrame = frame.clone();
   image_prev = image_next.clone();
