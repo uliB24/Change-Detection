@@ -13,7 +13,10 @@ namespace
 
   float distHSVsquared(const cv::Vec3f& v1, const cv::Vec3f& v2);
   void Vec3bToVec3fHSV(const cv::Vec3b& vb, cv::Vec3f& vf);
-
+  static const float pi = 3.14159265359f; 
+  static const float pim2 = 3.14159265359f*2.0f; 
+  static const float deg2rad = pi / 180.0f;
+  static const float rad2deg = 180.0f / pi;
 }
 
 /*
@@ -22,8 +25,8 @@ opening -> Feedback
 + feedback von Tracking
 
 */
-SOBS_CF::SOBS_CF(const cv::Mat& frame0, size_t M, size_t N, size_t kernel, float fuzzyexp, float fuzzythresh)
-  : m_N(N), m_M(M), m_fuzzyexp(fuzzyexp), m_fuzzythresh(fuzzythresh)
+SOBS_CF::SOBS_CF(const cv::Mat& frame0, int M, int N, size_t kernel, int kNaerHalf)
+  : m_N(N), m_M(M), m_kNearHalf(kNaerHalf)
 {
   m_offset = (kernel - 1)/2;
   m_widthSOM = frame0.size().width*M + 2*m_offset;
@@ -35,6 +38,7 @@ SOBS_CF::SOBS_CF(const cv::Mat& frame0, size_t M, size_t N, size_t kernel, float
 
   Mat frame0hsv;
   cvtColor(frame0, frame0hsv, CV_BGR2HSV);
+  //cvtColor(frame0, frame0hsv, CV_RGB2HSV);
 
   for(size_t y = 0; y < m_height; ++y)
   {
@@ -78,17 +82,21 @@ SOBS_CF::SOBS_CF(const cv::Mat& frame0, size_t M, size_t N, size_t kernel, float
 
 	//m_epsilon1 = 100.0f*100.0f;
 	//m_epsilon2 = 20.0f*20.0f;
-  m_epsilon1 = 0.1f;
-  m_epsilon2 = 0.09f;
+  m_epsilon1 = 0.12f;  //0.005-0.02
+  m_epsilon2 = 0.003f;
 
 	m_alpha1 = 1.0f/Wmax;
 	m_alpha2 = 0.05f/Wmax;
 
 	m_K = 0;
-	m_TSteps = 100;
+	m_TSteps = 400;
 
   m_back = frame0.clone();
 }
+
+// TODO: während der Trainingsphase Nachbarschaft(NCF) nicht mit einbeziehen
+// oder: nach Tainingsphase epsilon langsam verringern um Rückstände aufzufressen, dafür Trainingsphase kürzer
+// +: Feher bei größerer Nachbarschaft entfernen
 
 void SOBS_CF::update(const cv::Mat& frame, cv::Mat& fore)
 {
@@ -100,69 +108,113 @@ void SOBS_CF::update(const cv::Mat& frame, cv::Mat& fore)
   float alpha,a;
 	float epsilon;
 
-	if (m_K <= m_TSteps) {									// calibration phase
-		epsilon = m_epsilon1;
+	if (m_K <= m_TSteps)
+  {									// calibration phase
+    //epsilon = m_epsilon1 - m_K*(m_epsilon1-m_epsilon2)/m_TSteps;
+    epsilon = m_epsilon1;
 		alpha = (m_alpha1-m_K*(m_alpha1-m_alpha2)/m_TSteps);
 		m_K++;
-	} else {														// online phase
+	}
+  else
+  {														// online phase
 		epsilon = m_epsilon2;
 		alpha = m_alpha2;
 	}
 
+  Mat dist(Size(m_SOM[0].size(),m_SOM.size()), CV_32FC1);
+  Mat srcf(Size(m_width + 1, m_height + 1), CV_32FC3);
+  int jj;
+  int ii;
   for (size_t y=0;y<m_height;y++)
   {
-    int jj = m_offset + y*m_N;
+    jj = m_offset + y*m_N;
     for (size_t x=0;x<m_width;x++) 
     {
-			int ii = m_offset + x*m_M;
-
-   //   const float srcH = static_cast<float>(frameHSV.at<Vec3b>(y, x).val[0]) * (CV_PI / 180.0f);
-			//const float srcS = static_cast<float>(frameHSV.at<Vec3b>(y, x).val[1]) / 255.0f;
-			//const float srcV = static_cast<float>(frameHSV.at<Vec3b>(y, x).val[2]) / 255.0f;
-
+      ii = m_offset + x*m_M;
       Vec3f src;
       Vec3bToVec3fHSV(frameHSV.at<Vec3b>(y, x), src);
-
-
-      float d2min = FLT_MAX;
+      srcf.at<Vec3f>(y,x) = src;		
+      for (size_t l=0; l < m_N ;l++) 
+      {
+        for (size_t k=0; k < m_M;k++) 
+        {
+          dist.at<float>(jj + l,ii + k) = distHSVsquared(m_SOM[jj + l][ii + k], src);
+        }
+      }    
+    }
+  }
+  Mat distMin(Size(m_width + 1, m_height + 1), CV_32FC3);
+  for (size_t y=0;y<m_height;y++)
+  {
+    jj = m_offset + y*m_N;
+    for (size_t x=0;x<m_width;x++) 
+    {
+      ii = m_offset + x*m_M;
+      float dqmin = FLT_MAX;
 			size_t xHit = ii;
 			size_t yHit = jj;
-
-      float omega = 0;
-
-      for (size_t l=0;l<m_N;l++) 
+      for (size_t l=0; l < m_N ;l++) 
       {
-        for (size_t k=0;k<m_M;k++) 
+        for (size_t k=0; k < m_M;k++) 
         {
-       //   const float somH = m_SOM[jj+l][ii+k].val[0];
-			    //const float somS = m_SOM[jj+l][ii+k].val[1];
-			    //const float somV = m_SOM[jj+l][ii+k].val[2];
-        
-          const float d2 = distHSVsquared(m_SOM[jj+l][ii+k], src);
+          const float dq = dist.at<float>(jj + l,ii + k);
 
-          //const float d2 = (srcV * srcS * cos(srcH) - somV * somS * cos(somH)) * (srcV * srcS * cos(srcH) - somV * somS * cos(somH)) +
-          //                  (srcV * srcS * sin(srcH) - somV * somS * sin(somH)) * (srcV * srcS * sin(srcH) - somV * somS * sin(somH)) +
-          //                  (srcV - somV) * (srcV - somV);
-          //cout << "d: " << d2 << endl;
-          if(d2 < epsilon)
-            ++omega;
-          if (d2 < d2min)
+          if (dq < dqmin)
           {
-            d2min = d2;
+            dqmin = dq;
             xHit = ii + k;
             yHit = jj + l;
           }
         }
       }
+      distMin.at<Vec3f>(y,x) = Vec3f(dqmin, static_cast<float>(xHit), static_cast<float>(yHit));
+    }
+  }
+  for (size_t y=0;y<m_height;y++)
+  {
+    //jj = m_offset + y*m_N;
+    for (size_t x=0;x<m_width;x++) 
+    {
+			//ii = m_offset + x*m_M;
 
-      // Update SOM
+      const Vec3f src = srcf.at<Vec3f>(y, x);
+      //Vec3bToVec3fHSV(frameHSV.at<Vec3b>(y, x), src);
+     
+      float omega = 0;
+      float neighbours = 0;
+      //cout << "min: " << (-m_kNearHalf)*m_N << "max: " << (m_kNearHalf + 1)*m_N << endl; //m_N ist size_t !!!
+      for (int l= -m_kNearHalf; l < (m_kNearHalf + 1) ;l++) 
+      {
+        for (int k=-m_kNearHalf; k < (m_kNearHalf + 1);k++) 
+        {
+          if(y+l >= 0 && y+l < m_SOM[0].size() && x+k >= 0 && x+k < m_SOM.size())
+          {
+            ++neighbours;
+            //const float d2 = distHSVsquared(m_SOM[jj+l][ii+k], src);
+            //const float dq = distMin.at<float>(jj + l,ii + k);
+            if(distMin.at<Vec3f>(y + l,x + k)[0] < epsilon)
+            {
+              ++omega;
+            }       
+          }
+        }
+      }
+      
+      const float dqmin = distMin.at<Vec3f>(y,x)[0];
+			const size_t xHit = static_cast<size_t>(distMin.at<Vec3f>(y,x)[1]);
+			const size_t yHit = static_cast<size_t>(distMin.at<Vec3f>(y,x)[2]);
 
       // Berechne Lernrate alpha
       float fuzzyBG = 0.0f;
-			if ( d2min < epsilon ) 
-				fuzzyBG =  1.0f - d2min/epsilon;
+			if ( dqmin < epsilon ) 
+				fuzzyBG =  1.0f - dqmin/epsilon;
 
-      const float NCF = omega / static_cast<float>(m_M * m_N);
+      //const float NCF = omega / static_cast<float>((2*m_kNearHalf+1) * (2*m_kNearHalf+1));
+      float NCF = omega / neighbours;
+      //if (m_K <= m_TSteps)
+        //NCF = 1.0;
+      //if(m_K > 1)
+        //cout << "NCF: " << NCF << endl;
 
       float fuzzyCoherence = 0.0f;
       if(NCF > 0.5f)
@@ -199,7 +251,7 @@ void SOBS_CF::update(const cv::Mat& frame, cv::Mat& fore)
         fore.at<uchar>(y,x) = 0;
         // falls hier ein Hintergrundbild zum anzeigen generiert werden soll, kann für pos x,y  m_SOM[yHit][xHit] übernommen werden
 
-        m_back.at<Vec3b>(y,x)[0] = m_SOM[yHit][xHit].val[0] * (180.f / CV_PI);
+        m_back.at<Vec3b>(y,x)[0] = m_SOM[yHit][xHit].val[0] * rad2deg;
         m_back.at<Vec3b>(y,x)[1] = m_SOM[yHit][xHit].val[1] * 255.0f;
         m_back.at<Vec3b>(y,x)[2] = m_SOM[yHit][xHit].val[2] * 255.0f;
       }
@@ -225,14 +277,16 @@ namespace
 
   float distHSVsquared(const cv::Vec3f& v1, const cv::Vec3f& v2)
   {
-    return (v1[2] * v1[1] * cos(2.0f * CV_PI * v1[0]) - v2[2] * v2[1] * cos(2.0f * CV_PI * v2[0])) * (v1[2] * v1[1] * cos(2.0f * CV_PI * v1[0]) - v2[2] * v2[1] * cos(2.0f * CV_PI * v2[0])) +
-           (v1[2] * v1[1] * sin(2.0f * CV_PI * v1[0]) - v2[2] * v2[1] * sin(2.0f * CV_PI * v2[0])) * (v1[2] * v1[1] * sin(2.0f * CV_PI * v1[0]) - v2[2] * v2[1] * sin(2.0f * CV_PI * v2[0])) +
+    const float v1_21 = v1[2] * v1[1];
+    const float v2_21 = v2[2] * v2[1];
+    return (v1_21 * cos(pim2 * v1[0]) - v2_21 * cos(pim2 * v2[0])) * (v1_21 * cos(pim2 * v1[0]) - v2_21 * cos(pim2 * v2[0])) +
+           (v1_21 * sin(pim2 * v1[0]) - v2_21 * sin(pim2 * v2[0])) * (v1_21 * sin(pim2 * v1[0]) - v2_21 * sin(pim2 * v2[0])) +
            (v1[2] - v2[2]) * (v1[2] - v2[2]);
   }
 
   void Vec3bToVec3fHSV(const cv::Vec3b& vb, cv::Vec3f& vf)
   {
-    vf[0] = static_cast<float>(vb[0]) * (CV_PI / 180.0f);
+    vf[0] = static_cast<float>(vb[0]) * deg2rad;
 		vf[1] = static_cast<float>(vb[1]) / 255.0f;
 		vf[2] = static_cast<float>(vb[2]) / 255.0f;
   }
