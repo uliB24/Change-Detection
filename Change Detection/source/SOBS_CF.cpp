@@ -83,13 +83,15 @@ SOBS_CF::SOBS_CF(const cv::Mat& frame0, int M, int N, size_t kernel, int kNaerHa
 	//m_epsilon1 = 100.0f*100.0f;
 	//m_epsilon2 = 20.0f*20.0f;
   m_epsilon1 = 0.12f;  //0.005-0.02
-  m_epsilon2 = 0.003f;
+  m_epsilon2 = 0.007f;
 
 	m_alpha1 = 1.0f/Wmax;
 	m_alpha2 = 0.05f/Wmax;
 
 	m_K = 0;
-	m_TSteps = 400;
+  m_K2 = 0;
+	m_TSteps = 350;
+  m_ReduceESteps = 50;
 
   m_back = frame0.clone();
 }
@@ -117,9 +119,19 @@ void SOBS_CF::update(const cv::Mat& frame, cv::Mat& fore)
 	}
   else
   {														// online phase
-		epsilon = m_epsilon2;
-		alpha = m_alpha2;
+    if(m_K2 <= m_ReduceESteps)
+    {
+      ++m_K2;
+      epsilon = m_epsilon1 - (m_K2)*(m_epsilon1-m_epsilon2)/m_ReduceESteps;
+      alpha = m_alpha2;
+    }
+    else
+    {
+		  epsilon = m_epsilon2;
+		  alpha = m_alpha2;
+    }
 	}
+  //cout << "epsilon: " << epsilon << endl;
 
   Mat dist(Size(m_SOM[0].size(),m_SOM.size()), CV_32FC1);
   Mat srcf(Size(m_width + 1, m_height + 1), CV_32FC3);
@@ -187,7 +199,7 @@ void SOBS_CF::update(const cv::Mat& frame, cv::Mat& fore)
       {
         for (int k=-m_kNearHalf; k < (m_kNearHalf + 1);k++) 
         {
-          if(y+l >= 0 && y+l < m_SOM[0].size() && x+k >= 0 && x+k < m_SOM.size())
+          if(y+l >= 0 && y+l < m_height && x+k >= 0 && x+k < m_width)
           {
             ++neighbours;
             //const float d2 = distHSVsquared(m_SOM[jj+l][ii+k], src);

@@ -5,7 +5,7 @@
 class SOBS_CF
 {
 public:
-  SOBS_CF(const cv::Mat& frame0, int M = 3, int N = 3, size_t kernel = 3, int kNaerHalf = 1);
+  SOBS_CF(const cv::Mat& frame0, int M = 3, int N = 3, size_t kernel = 3, int kNaerHalf = 4);
 
   void update(const cv::Mat& frame, cv::Mat& fore);
 
@@ -28,6 +28,8 @@ private:
 	size_t m_offset;
   size_t m_K;
 	size_t m_TSteps;
+  size_t m_ReduceESteps;
+  size_t m_K2;
   int m_kNearHalf;
 
   float m_epsilon1;

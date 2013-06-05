@@ -24,7 +24,10 @@ namespace
   //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; 
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in";
   string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in";
-  
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/canoe/input/in";
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in";
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/streetLight/input/in";
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/parking/input/in";
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/highway/input/in";
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in";
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/office/input/in";
