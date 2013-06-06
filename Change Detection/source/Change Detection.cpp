@@ -21,13 +21,27 @@ namespace
 {
   //Konstanten:
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/canoe/input/in";
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; 
+  
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in";
-  string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in";
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/canoe/input/in";
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in";
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/streetLight/input/in";
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/parking/input/in";
+  
+  string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in"; //sehr gut, aber Auto im Schtten-> schattiger Teil teilweise nicht segmentiert
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/canoe/input/in"; //gut, Köpfe teilweise abgeschnitten
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // viel bei Fontainen
+  
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/office/input/in"; //gut, Hase wird etwas aufgefressen
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/Bootstrap/b"; //gut, aber da wo Leute während der gesamten Lernphase stehen Probleme
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/WavingTrees/b"; sehr gut, wenig Rauschen bei Baum
+  
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/ForegroundAperture/b"; //schlecht, schlefender Typ bleibt Hintergrund
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/streetLight/input/in"; //gut, aber Steilweise bei Schtten auf Lastern doof
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/parking/input/in"; //ok
+
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/backdoor/input/in"; //Probleme mit Somme, ansonsten ok
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in"; //ok, Probleme bei Spiegelung, Schtten noch rausnehmen?
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/copyMachine/input/in"; //bei kürzerer Lernrate besser(80), schatten
+  
+  //string path = "E:/uniSonstiges/E_trainingsdaten/sofa/sofa/input/in";
+  
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/highway/input/in";
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in";
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/office/input/in";
@@ -44,7 +58,9 @@ int main(int argc, char *argv[])
   ostringstream oss2;
   oss2 << path;
   oss2 << std::setfill ('0') << std::setw (6);
+  //oss2 << std::setfill ('0') << std::setw (5);
   oss2 << count << ".jpg";
+  //oss2 << count << ".bmp";
   // Einlesen des Bildes
   Mat frame = imread(oss2.str(), CV_LOAD_IMAGE_COLOR);
   SOBS_CF sobs(frame);
@@ -62,9 +78,13 @@ int main(int argc, char *argv[])
     ostringstream oss;
     oss << path;
     oss << std::setfill ('0') << std::setw (6);
+    //oss << std::setfill ('0') << std::setw (5);
     oss << count << ".jpg";
+    //oss << count << ".bmp";
     // Einlesen des Bildes
     frame = imread(oss.str(), CV_LOAD_IMAGE_COLOR);
+    if(!frame.data)
+      break;
 
     sobs.update(frame,fore);
 
@@ -73,8 +93,10 @@ int main(int argc, char *argv[])
     imshow("frame",frame);
     imshow("fore",fore);
     imshow("Background",back);
-    //waitKey(0);
-    if(waitKey(10) >= 0) break;
+    //if(count > 1080)
+      //waitKey(0);
+    if(waitKey(10) >= 0) 
+      break;
   }
 
   /*

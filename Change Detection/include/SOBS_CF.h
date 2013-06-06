@@ -5,7 +5,7 @@
 class SOBS_CF
 {
 public:
-  SOBS_CF(const cv::Mat& frame0, int M = 3, int N = 3, size_t kernel = 3, int kNaerHalf = 4);
+  SOBS_CF(const cv::Mat& frame0, int M = 3, int N = 3, size_t kernel = 3, int kNaerHalf = 5);
 
   void update(const cv::Mat& frame, cv::Mat& fore);
 

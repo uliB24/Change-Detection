@@ -15,6 +15,8 @@ namespace
   void Vec3bToVec3fHSV(const cv::Vec3b& vb, cv::Vec3f& vf);
   static const float pi = 3.14159265359f; 
   static const float pim2 = 3.14159265359f*2.0f; 
+  //static const float pim2 = 1.0f; 
+
   static const float deg2rad = pi / 180.0f;
   static const float rad2deg = 180.0f / pi;
 }
@@ -84,13 +86,15 @@ SOBS_CF::SOBS_CF(const cv::Mat& frame0, int M, int N, size_t kernel, int kNaerHa
 	//m_epsilon2 = 20.0f*20.0f;
   m_epsilon1 = 0.12f;  //0.005-0.02
   m_epsilon2 = 0.007f;
+  //m_epsilon2 = 0.005f;
 
 	m_alpha1 = 1.0f/Wmax;
 	m_alpha2 = 0.05f/Wmax;
 
 	m_K = 0;
   m_K2 = 0;
-	m_TSteps = 350;
+	//m_TSteps = 350;
+  m_TSteps = 150;
   m_ReduceESteps = 50;
 
   m_back = frame0.clone();
@@ -137,10 +141,12 @@ void SOBS_CF::update(const cv::Mat& frame, cv::Mat& fore)
   Mat srcf(Size(m_width + 1, m_height + 1), CV_32FC3);
   int jj;
   int ii;
-  for (size_t y=0;y<m_height;y++)
+  size_t x=0;
+  #pragma omp parallel for private(x) 
+  for (int y=0;y<m_height;y++)
   {
     jj = m_offset + y*m_N;
-    for (size_t x=0;x<m_width;x++) 
+    for (x=0;x<m_width;x++) 
     {
       ii = m_offset + x*m_M;
       Vec3f src;
@@ -156,10 +162,12 @@ void SOBS_CF::update(const cv::Mat& frame, cv::Mat& fore)
     }
   }
   Mat distMin(Size(m_width + 1, m_height + 1), CV_32FC3);
-  for (size_t y=0;y<m_height;y++)
+  //size_t x=0;
+  //#pragma omp parallel for private(x) 
+  for (int y=0;y<m_height;y++)
   {
     jj = m_offset + y*m_N;
-    for (size_t x=0;x<m_width;x++) 
+    for (x=0;x<m_width;x++) 
     {
       ii = m_offset + x*m_M;
       float dqmin = FLT_MAX;
@@ -182,10 +190,12 @@ void SOBS_CF::update(const cv::Mat& frame, cv::Mat& fore)
       distMin.at<Vec3f>(y,x) = Vec3f(dqmin, static_cast<float>(xHit), static_cast<float>(yHit));
     }
   }
-  for (size_t y=0;y<m_height;y++)
+  //size_t x=0;
+  #pragma omp parallel for private(x) 
+  for (int y=0;y<m_height;y++)
   {
     //jj = m_offset + y*m_N;
-    for (size_t x=0;x<m_width;x++) 
+    for (x=0;x<m_width;x++) 
     {
 			//ii = m_offset + x*m_M;
 
@@ -231,7 +241,7 @@ void SOBS_CF::update(const cv::Mat& frame, cv::Mat& fore)
       float fuzzyCoherence = 0.0f;
       if(NCF > 0.5f)
         fuzzyCoherence = 2 * NCF - 1;
-
+      //fuzzyCoherence = min(fuzzyCoherence, 1.0f);
 			//const float alphamax = alpha*exp(m_fuzzyexp*fuzzyBG);
       //cout << "d2min: " << d2min << endl;
       //cout << "fuzzyBG: " << fuzzyBG << endl;
@@ -291,8 +301,11 @@ namespace
   {
     const float v1_21 = v1[2] * v1[1];
     const float v2_21 = v2[2] * v2[1];
-    return (v1_21 * cos(pim2 * v1[0]) - v2_21 * cos(pim2 * v2[0])) * (v1_21 * cos(pim2 * v1[0]) - v2_21 * cos(pim2 * v2[0])) +
-           (v1_21 * sin(pim2 * v1[0]) - v2_21 * sin(pim2 * v2[0])) * (v1_21 * sin(pim2 * v1[0]) - v2_21 * sin(pim2 * v2[0])) +
+    //return (v1_21 * cos(pim2 * v1[0]) - v2_21 * cos(pim2 * v2[0])) * (v1_21 * cos(pim2 * v1[0]) - v2_21 * cos(pim2 * v2[0])) +
+    //       (v1_21 * sin(pim2 * v1[0]) - v2_21 * sin(pim2 * v2[0])) * (v1_21 * sin(pim2 * v1[0]) - v2_21 * sin(pim2 * v2[0])) +
+    //       (v1[2] - v2[2]) * (v1[2] - v2[2]);
+    return (v1_21 * cos(v1[0]) - v2_21 * cos(v2[0])) * (v1_21 * cos(v1[0]) - v2_21 * cos(v2[0])) +
+           (v1_21 * sin(v1[0]) - v2_21 * sin(v2[0])) * (v1_21 * sin(v1[0]) - v2_21 * sin(v2[0])) +
            (v1[2] - v2[2]) * (v1[2] - v2[2]);
   }
 
