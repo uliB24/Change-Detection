@@ -24,25 +24,25 @@ namespace
   
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in";
   
-  string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in"; //sehr gut, aber Auto im Schtten-> schattiger Teil teilweise nicht segmentiert
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/highway/input/in"; //sehr gut, aber Auto im Schtten-> schattiger Teil teilweise nicht segmentiert
   //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/canoe/input/in"; //gut, Köpfe teilweise abgeschnitten
   //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/fountain/input/in"; // viel bei Fontainen
   
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/office/input/in"; //gut, Hase wird etwas aufgefressen
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/office/input/in"; //gut, Hose wird etwas aufgefressen
   //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/base/Bootstrap/b"; //gut, aber da wo Leute während der gesamten Lernphase stehen Probleme
   //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/dynamicbackground/WavingTrees/b"; sehr gut, wenig Rauschen bei Baum
   
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/ForegroundAperture/b"; //schlecht, schlefender Typ bleibt Hintergrund
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/ForegroundAperture/b"; //schlecht, schlafender Typ bleibt Hintergrund
   //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/streetLight/input/in"; //gut, aber Steilweise bei Schtten auf Lastern doof
   //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/intermittedObjectMotion/parking/input/in"; //ok
 
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/backdoor/input/in"; //Probleme mit Somme, ansonsten ok
-  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in"; //ok, Probleme bei Spiegelung, Schtten noch rausnehmen?
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/backdoor/input/in"; //Probleme mit Sonne, ansonsten ok
+  //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in"; //ok, Probleme bei Spiegelung, Schatten noch rausnehmen?
   //string path = "E:/uniSonstiges/E_trainingsdaten/trainingsdaten/shadow/copyMachine/input/in"; //bei kürzerer Lernrate besser(80), schatten
   
   //string path = "E:/uniSonstiges/E_trainingsdaten/sofa/sofa/input/in";
   
-  //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/highway/input/in";
+  string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/highway/input/in";
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/shadow/bungalows/input/in";
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/office/input/in";
   //string path = "C:/Users/Uli/Documents/Uni/Semester 6/E_trainingsdaten/trainingsdaten/base/Bootstrap/b"; // Tracken!!, achtung bmp mit 5 zahlen
