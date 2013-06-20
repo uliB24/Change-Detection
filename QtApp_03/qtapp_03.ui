@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>946</width>
-    <height>763</height>
+    <width>933</width>
+    <height>730</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,7 +57,7 @@
    <widget class="QLineEdit" name="winInput_04">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>120</x>
       <y>610</y>
       <width>31</width>
       <height>31</height>
@@ -103,7 +103,7 @@
    <widget class="QLineEdit" name="winInput_01">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>120</x>
       <y>490</y>
       <width>31</width>
       <height>31</height>
@@ -224,7 +224,7 @@
    <widget class="QLabel" name="frameLabelBG">
     <property name="geometry">
      <rect>
-      <x>470</x>
+      <x>460</x>
       <y>400</y>
       <width>432</width>
       <height>288</height>
@@ -260,7 +260,7 @@
    <widget class="QLineEdit" name="winInput_02">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>120</x>
       <y>530</y>
       <width>31</width>
       <height>31</height>
@@ -270,7 +270,7 @@
    <widget class="QLineEdit" name="winInput_03">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>120</x>
       <y>570</y>
       <width>31</width>
       <height>31</height>
@@ -309,23 +309,176 @@
      <string/>
     </property>
    </widget>
-  </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>946</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>File</string>
+   <widget class="QLineEdit" name="winShow_01">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>490</y>
+      <width>101</width>
+      <height>31</height>
+     </rect>
     </property>
-    <addaction name="actionOpen"/>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>epsilon1:</string>
+    </property>
    </widget>
-   <addaction name="menuFile"/>
+   <widget class="QLineEdit" name="winShow_02">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>530</y>
+      <width>101</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>epsilon2:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="winShow_03">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>570</y>
+      <width>101</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>alpha1:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="winShow_04">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>610</y>
+      <width>101</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>alpha2:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="winShow_05">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>490</y>
+      <width>91</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Lerndauer:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="winInput_05">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>490</y>
+      <width>31</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnRestartLearning">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>540</y>
+      <width>181</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>restart learning phase</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnFaster">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>610</y>
+      <width>111</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>faster</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnSlower">
+    <property name="geometry">
+     <rect>
+      <x>320</x>
+      <y>610</y>
+      <width>111</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>slower</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">

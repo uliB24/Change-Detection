@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_QtApp_03_t {
-    QByteArrayData data[14];
-    char stringdata[220];
+    QByteArrayData data[16];
+    char stringdata[271];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -38,18 +38,21 @@ QT_MOC_LITERAL(5, 45, 19),
 QT_MOC_LITERAL(6, 65, 19),
 QT_MOC_LITERAL(7, 85, 20),
 QT_MOC_LITERAL(8, 106, 22),
-QT_MOC_LITERAL(9, 129, 20),
-QT_MOC_LITERAL(10, 150, 5),
-QT_MOC_LITERAL(11, 156, 20),
-QT_MOC_LITERAL(12, 177, 20),
-QT_MOC_LITERAL(13, 198, 20)
+QT_MOC_LITERAL(9, 129, 29),
+QT_MOC_LITERAL(10, 159, 20),
+QT_MOC_LITERAL(11, 180, 5),
+QT_MOC_LITERAL(12, 186, 20),
+QT_MOC_LITERAL(13, 207, 20),
+QT_MOC_LITERAL(14, 228, 20),
+QT_MOC_LITERAL(15, 249, 20)
     },
     "QtApp_03\0open\0\0processing\0on_btnOpen_clicked\0"
     "on_btnClear_clicked\0on_btnPause_clicked\0"
     "on_btnResume_clicked\0on_btnSetParam_clicked\0"
+    "on_btnRestartLearning_clicked\0"
     "txtChangeWinInput_01\0input\0"
     "txtChangeWinInput_02\0txtChangeWinInput_03\0"
-    "txtChangeWinInput_04\0"
+    "txtChangeWinInput_04\0txtChangeWinInput_05\0"
 };
 #undef QT_MOC_LITERAL
 
@@ -59,7 +62,7 @@ static const uint qt_meta_data_QtApp_03[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      11,   14, // methods
+      13,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -67,17 +70,19 @@ static const uint qt_meta_data_QtApp_03[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   69,    2, 0x08,
-       3,    0,   70,    2, 0x08,
-       4,    0,   71,    2, 0x08,
-       5,    0,   72,    2, 0x08,
-       6,    0,   73,    2, 0x08,
-       7,    0,   74,    2, 0x08,
-       8,    0,   75,    2, 0x08,
-       9,    1,   76,    2, 0x08,
-      11,    1,   79,    2, 0x08,
-      12,    1,   82,    2, 0x08,
-      13,    1,   85,    2, 0x08,
+       1,    0,   79,    2, 0x08,
+       3,    0,   80,    2, 0x08,
+       4,    0,   81,    2, 0x08,
+       5,    0,   82,    2, 0x08,
+       6,    0,   83,    2, 0x08,
+       7,    0,   84,    2, 0x08,
+       8,    0,   85,    2, 0x08,
+       9,    0,   86,    2, 0x08,
+      10,    1,   87,    2, 0x08,
+      12,    1,   90,    2, 0x08,
+      13,    1,   93,    2, 0x08,
+      14,    1,   96,    2, 0x08,
+      15,    1,   99,    2, 0x08,
 
  // slots: parameters
     QMetaType::Void,
@@ -87,10 +92,12 @@ static const uint qt_meta_data_QtApp_03[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::QString,   10,
-    QMetaType::Void, QMetaType::QString,   10,
-    QMetaType::Void, QMetaType::QString,   10,
-    QMetaType::Void, QMetaType::QString,   10,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::QString,   11,
+    QMetaType::Void, QMetaType::QString,   11,
+    QMetaType::Void, QMetaType::QString,   11,
+    QMetaType::Void, QMetaType::QString,   11,
+    QMetaType::Void, QMetaType::QString,   11,
 
        0        // eod
 };
@@ -107,10 +114,12 @@ void QtApp_03::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 4: _t->on_btnPause_clicked(); break;
         case 5: _t->on_btnResume_clicked(); break;
         case 6: _t->on_btnSetParam_clicked(); break;
-        case 7: _t->txtChangeWinInput_01((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 8: _t->txtChangeWinInput_02((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 9: _t->txtChangeWinInput_03((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 10: _t->txtChangeWinInput_04((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 7: _t->on_btnRestartLearning_clicked(); break;
+        case 8: _t->txtChangeWinInput_01((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 9: _t->txtChangeWinInput_02((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 10: _t->txtChangeWinInput_03((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 11: _t->txtChangeWinInput_04((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 12: _t->txtChangeWinInput_05((*reinterpret_cast< QString(*)>(_a[1]))); break;
         default: ;
         }
     }
@@ -141,13 +150,13 @@ int QtApp_03::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 11)
+        if (_id < 13)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 11;
+        _id -= 13;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 11)
+        if (_id < 13)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 11;
+        _id -= 13;
     }
     return _id;
 }
